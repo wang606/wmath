@@ -5,16 +5,16 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="wmath",
-    version="0.0.5",
+    version="0.0.6",
     author="wang606",
     author_email="wang__qing__hua@163.com",
     description="Another simple mathematical package in the world",
     LICENSE="MIT License", 
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://dev/null",
+    url="https://github.com/wang606/wmath",
     project_urls={
-        "Bug Tracker": "https://please/send/to/dev/null/i/check/that/place/every/night",
+        "Bug Tracker": "https://github.com/wang606/wmath/issues",
     },
     classifiers=[
         "Programming Language :: Python :: 3",

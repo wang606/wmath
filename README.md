@@ -2,7 +2,7 @@
 'wmath' is a simple mathematical package designed by a bored undergraduate who wants to review math and python at the same time.
 ## features:
 - <font color=#ff0000>wmath use a class called '**Meta**' to manage the global meta information, which is not allowed to be instantiated</font>
-- <font color=#ff0000>wmath use class **Fraction** as its basic data type, since wmath focus on rational operation.</font> 
+- <font color=#ff0000>wmath use class **Fraction** as its basic data type, since wmath focus on rational operation</font> 
 - functions defined in wmath almost wouldn't change the value of pointer parameter
 ## modules
 wmath contains the following modules: 
@@ -10,6 +10,7 @@ wmath contains the following modules:
 - number_theory.py ------ handling number theory problems in math
 - fraction.py ------ the operation in fraction
 - polynomial.py ------ the related problems in polynomial
+- matrix.py ------ the problems related to matrix in the rational number field
 # reference
 ## meta.py
 ### Constant
@@ -337,4 +338,44 @@ a * x + b * y = the greatest common divisor.
     :param a: (Polynomial)
     :param b: (Polynomial)
     :return: (tuple) the greatest common divisor, x, y
+```
+## matrix.py
+### Matrix
+```markdown
+(class)
+define the class of matrix in the rational number field and related operations among them.
+    __init__(self, kernel: list)
+    __str__(self)
+    __eq__(self, other)
+    __pos__(self)
+    __neg__(self)
+    __add__(self)
+    __sub__(self)
+    __mul__(self)
+```
+- size(self)
+```markdown
+total number of rows and columns.
+    :return: (tuple)
+```
+- part(self, rows, cols):
+```markdown
+return a new Matrix with values deep-copied from {self}, specified by {rows} and {cols}.
+if rows(cols) is a tuple like (a1, a2), that means from row(col) a1 to row(col) a2, with a2 not included.
+if rows(cols) is a list like [a1, a2, ...], that means row(col) a1, a2, ..., with everyone included.
+    :param rows: (tuple or list of int)
+    :param cols: (tuple or list of int)
+    :return: (Matrix)
+```
+- determinant(self)
+```markdown
+calc determinant of a square matrix.
+    :return: (Fraction) determinant
+```
+### 
+determinant_upper_triangle(x: list)
+```markdown
+calc determinant of x as a 2d Matrix by upper-triangle method.
+    :param x: (list2d of Fraction)
+    :return: (Fraction) determinant
 ```
