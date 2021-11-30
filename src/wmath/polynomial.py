@@ -2,55 +2,41 @@
 polynomial.py
 this script is response for the related problems in rational polynomial.
 """
+from wmath.meta import Meta
 from wmath.number_theory import (greatest_common_divisor_in_list,
                                  least_common_multiple_in_list,
                                  prime_factor_without_exp,
                                  factor)
+from wmath.paradigm import Paradigm
 from wmath.fraction import Fraction
+from copy import deepcopy
 
 
-class Polynomial:
+class Polynomial(Paradigm):
     """
     define the class of polynomial and related operations among them.
     """
     def __init__(self, coefficient: list):
-        self.__dict__['__inited'] = False
+        super().__init__()
         assert coefficient
+        _type = type(coefficient[-1]).__name__
         _coefficient = []
         for _i in coefficient:
-            assert type(_i) == Fraction
+            assert type(_i).__name__ == _type
             _coefficient.append(_i)
-        self.degree = len(_coefficient) - 1
-        while self.degree > 0 and _coefficient[-1].molecule == 0:
+        while len(_coefficient) > 1 and Meta.determine_meta(_coefficient[-1], 'ZERO'):
             _coefficient.pop()
-            self.degree -= 1
         self.coefficient = _coefficient
-        self.__dict__['__inited'] = True
-
-    def __getattr__(self, item):
-        raise AttributeError
-
-    def __setattr__(self, key, value):
-        self.__dict__[key] = value
-        if self.__dict__['__inited']:
-            # dynamically adjust the polynomial
-            self.__dict__['degree'] = len(self.__dict__['coefficient']) - 1
-            while self.__dict__['degree'] > 0 and self.__dict__['coefficient'][-1].molecule == 0:
-                self.__dict__['coefficient'].pop()
-                self.__dict__['degree'] -= 1
 
     def __str__(self):
         _str = '('
-        for _i in range(self.degree, 0, -1):
+        for _i in range(self.degree(), 0, -1):
             _str += str(self.coefficient[_i]) + ')x**' + str(_i) + '+('
         _str += str(self.coefficient[0]) + ')'
         return _str
 
     def __pos__(self):
-        _coefficient = []
-        for _i in self.coefficient:
-            _coefficient.append(_i)
-        return Polynomial(_coefficient)
+        return deepcopy(self)
 
     def __neg__(self):
         _coefficient = []
@@ -59,54 +45,63 @@ class Polynomial:
         return Polynomial(_coefficient)
 
     def __eq__(self, other):
+        assert self.basic_data_type().__name__ == other.basic_data_type().__name__
         if self.coefficient == other.coefficient:
             return True
-        if self.degree != other.degree:
+        if self.degree() != other.degree():
             return False
-        for _i in range(self.degree + 1):
+        for _i in range(self.degree() + 1):
             if self.coefficient[_i] != other.coefficient[_i]:
                 return False
         return True
 
     def __add__(self, other):
-        _degree = max(self.degree, other.degree)
-        _coefficient = [Fraction(0, 1) for _i in range(_degree + 1)]
+        assert self.basic_data_type().__name__ == other.basic_data_type().__name__
+        _degree = max(self.degree(), other.degree())
+        _coefficient = [Meta.get_meta(self.coefficient[-1], 'ZERO') for _i in range(_degree + 1)]
         for _i in range(_degree + 1):
-            if _i <= self.degree:
+            if _i <= self.degree():
                 _coefficient[_i] += self.coefficient[_i]
-            if _i <= other.degree:
+            if _i <= other.degree():
                 _coefficient[_i] += other.coefficient[_i]
         return Polynomial(_coefficient)
 
     def __sub__(self, other):
-        _degree = max(self.degree, other.degree)
-        _coefficient = [Fraction(0, 1) for _i in range(_degree + 1)]
+        assert self.basic_data_type().__name__ == other.basic_data_type().__name__
+        _degree = max(self.degree(), other.degree())
+        _coefficient = [Meta.get_meta(self.coefficient[-1], 'ZERO') for _i in range(_degree + 1)]
         for _i in range(_degree + 1):
-            if _i <= self.degree:
+            if _i <= self.degree():
                 _coefficient[_i] += self.coefficient[_i]
-            if _i <= other.degree:
+            if _i <= other.degree():
                 _coefficient[_i] -= other.coefficient[_i]
         return Polynomial(_coefficient)
 
     def __mul__(self, other):
-        _degree = self.degree + other.degree
-        _coefficient = [Fraction(0, 1) for _i in range(_degree + 1)]
-        for _i in range(self.degree + 1):
-            for _j in range(other.degree + 1):
+        assert self.basic_data_type().__name__ == other.basic_data_type().__name__
+        _degree = self.degree() + other.degree()
+        _coefficient = [Meta.get_meta(self.coefficient[-1], 'ZERO') for _i in range(_degree + 1)]
+        for _i in range(self.degree() + 1):
+            for _j in range(other.degree() + 1):
                 _coefficient[_i + _j] += self.coefficient[_i] * other.coefficient[_j]
         return Polynomial(_coefficient)
 
     def __truediv__(self, other):
+        assert self.basic_data_type().__name__ == other.basic_data_type().__name__
         _self = +self
-        if self.degree < other.degree:
-            return Polynomial([Fraction(0, 1)]), _self
-        if other.degree == 0:
-            return _self.times(other.coefficient[0]), Polynomial([Fraction(0, 1)])
-        _degree = _self.degree - other.degree
-        _coefficient = [Fraction(0, 1) for _i in range(_degree + 1)]
-        while _self.degree >= other.degree:
-            _coefficient[_self.degree - other.degree] = _self.coefficient[-1] / other.coefficient[-1]
-            _self -= other.times(_coefficient[_self.degree - other.degree], _self.degree - other.degree)
+        if _self.degree() < other.degree():
+            return Polynomial([Meta.get_meta(self.coefficient[-1], 'ZERO')]), _self
+        if other.degree() == 0:
+            return _self.times(Meta.get_meta(self.coefficient[-1], 'ONE') / other.coefficient[0]), \
+                   Polynomial([Meta.get_meta(self.coefficient[-1], 'ZERO')])
+        _degree = _self.degree() - other.degree()
+        _coefficient = [Meta.get_meta(self.coefficient[-1], 'ZERO') for _i in range(_degree + 1)]
+        while _self.degree() >= other.degree():
+            _degree = _self.degree()
+            _coefficient[_self.degree() - other.degree()] = _self.coefficient[-1] / other.coefficient[-1]
+            _self -= other.times(_coefficient[_self.degree() - other.degree()], _self.degree() - other.degree(), True)
+            if _self.degree() == _degree:
+                _self.coefficient.pop()
         return Polynomial(_coefficient), _self
 
     def __floordiv__(self, other):
@@ -117,7 +112,7 @@ class Polynomial:
 
     def __pow__(self, power: int, modulo=None):
         _self = +self
-        _pow = Polynomial([Fraction(1, 1)])
+        _pow = Polynomial([Meta.get_meta(self.coefficient[-1], 'ONE')])
         while power:
             if modulo:
                 if power & 1:
@@ -130,47 +125,56 @@ class Polynomial:
             power >>= 1
         return _pow
 
-    def value(self, x: Fraction):
+    def basic_data_type(self):
+        return type(self.coefficient[-1])
+
+    def degree(self):
+        return len(self.coefficient) - 1
+
+    def value(self, x):
         """
         calc the value of the corresponding polynomial function where x is designated.
-        :param x: (Fraction) independent variable
-        :return: (Fraction) value
+        :param x: (self.basic_data_type()) independent variable
+        :return: (self.basic_data_type()) value
         """
-        _value = Fraction(0, 1)
-        for _i in range(self.degree + 1):
+        _value = Meta.get_meta(self.coefficient[-1], 'ZERO')
+        for _i in range(self.degree() + 1):
             _value += self.coefficient[_i] * x ** _i
         return _value
 
-    def adjust(self):
-        """
-        manually adjust the polynomial after you changed some specific value in the coefficient,
-        while didn't fire the __setattr__() function since the coefficient is a pointer.
-        :return: (Polynomial) self after adjust
-        """
-        self.__dict__['degree'] = len(self.__dict__['coefficient']) - 1
-        while self.__dict__['degree'] > 0 and self.__dict__['coefficient'][-1].molecule == 0:
-            self.__dict__['coefficient'].pop()
-            self.__dict__['degree'] -= 1
-
-    def monic(self):
+    def monic(self, _new: bool = False):
         """
         return a monic polynomial with a same coefficient ratios of {self}.
+        _new decides whether to return a new polynomial or applying change on {self}.
+        :param _new: (bool)
         :return: (Polynomial) as above
         """
-        _self = +self
-        if _self.coefficient[-1] == Fraction(1, 1) or _self.degree == 0 and _self.coefficient[-1].molecule == 0 :
+        if _new:
+            _self = +self
+        else:
+            _self = self
+        if Meta.determine_meta(_self.coefficient[-1], 'ONE') or \
+                _self.degree() == 0 and Meta.determine_meta(_self.coefficient[0], 'ZERO'):
             return _self
         else:
-            for _i in range(_self.degree + 1):
+            for _i in range(_self.degree()):
                 _self.coefficient[_i] /= _self.coefficient[-1]
+            _self.coefficient[-1] = Meta.get_meta(self.coefficient[-1], 'ONE')
             return self
 
-    def primitive(self):
+    def primitive(self, _new: bool = False):
         """
+        *** this function is valid only when self.basic_data_type() is Fraction ! ***
         return a primitive polynomial with a same coefficient ratios of {self}.
+        _new decides whether to return a new polynomial or applying change on {self}.
+        :param _new: (bool)
         :return: (Polynomial) as above
         """
-        _self = +self
+        assert self.basic_data_type().__name__ == 'Fraction'
+        if _new:
+            _self = +self
+        else:
+            _self = self
         _molecule_list = []
         _denominator_list = []
         for _i in _self.coefficient:
@@ -178,40 +182,47 @@ class Polynomial:
             _denominator_list.append(_i.denominator)
         _molecule = least_common_multiple_in_list(_denominator_list)
         _denominator = greatest_common_divisor_in_list(_molecule_list)
-        _times = Fraction(_molecule, _denominator)
-        for _i in range(_self.degree + 1):
+        _times = Fraction([_molecule, _denominator])
+        for _i in range(_self.degree() + 1):
             _self.coefficient[_i] *= _times
         return _self
 
-    def times(self, n: Fraction, degree: int = 0):
+    def times(self, n, degree: int = 0, _new: bool = False):
         """
         a new polynomial whose value is self * (n)x**(degree)
-        :param n: (Fraction)
+        _new decides whether to return a new polynomial or applying change on {self}.
+        :param n: (self.basic_data_type())
         :param degree: (int)
+        :param _new: (bool)
         :return: (Polynomial) the new polynomial
         """
         assert degree >= 0
-        _coefficient = [Fraction(0, 1) for _i in range(degree)]
+        _coefficient = [Meta.get_meta(self.coefficient[-1], 'ZERO') for _i in range(degree)]
         for _i in self.coefficient:
             _coefficient.append(_i * n)
-        return Polynomial(_coefficient)
+        if _new:
+            return Polynomial(_coefficient)
+        else:
+            self.coefficient = _coefficient
+            return self
 
     def rational_roots(self):
         """
+        *** this function is valid only when self.basic_data_type() is Fraction ! ***
         calc all rational roots in the corresponding polynomial function.
         :return: (list of Fraction) all rational roots
         """
         _self = (+self).primitive()
-        if _self.degree == 0:
+        if _self.degree() == 0:
             return []
-        if _self.degree == 1:
+        if _self.degree() == 1:
             return [-_self.coefficient[0] / _self.coefficient[1]]
         _molecule_list = factor(_self.coefficient[0].molecule)
         _denominator_list = factor(_self.coefficient[-1].molecule)
         _rational_roots = []
         for _molecule in _molecule_list:
             for _denominator in _denominator_list:
-                _fraction = Fraction(_molecule, _denominator)
+                _fraction = Fraction([_molecule, _denominator])
                 if _self.value(_fraction).molecule == 0:
                     _rational_roots.append(_fraction)
                 if _self.value(-_fraction).molecule == 0:
@@ -220,16 +231,22 @@ class Polynomial:
 
     def formula(self):
         """
-        :return: (string) the formula form string of the fraction
+        :return: (string) the formula form string of the polynomial
         """
         _str = ''
-        for _i in range(self.degree, 0, -1):
-            _str += self.coefficient[_i].formula() + 'x^' + str(_i) + '+'
-        _str += self.coefficient[0].formula()
+        if hasattr(self.basic_data_type(), 'formula'):
+            for _i in range(self.degree(), 0, -1):
+                _str += self.coefficient[_i].formula() + 'x^' + str(_i) + '+'
+            _str += self.coefficient[0].formula()
+        else:
+            for _i in range(self.degree(), 0, -1):
+                _str += str(self.coefficient[_i]) + 'x^' + str(_i) + '+'
+            _str += str(self.coefficient[0])
         return _str
 
     def is_irreducible_according_eisenstein(self):
         """
+        *** this function is valid only when self.basic_data_type() is Fraction ! ***
         judge weather the polynomial is irreducible according eisenstein discriminant method.
         :return: (bool) True for irreducible, and False for unclear rather than reducible
         """
@@ -253,7 +270,8 @@ def greatest_common_divisor_in_polynomial(a: Polynomial, b: Polynomial):
     :param b: (Polynomial)
     :return: (Polynomial)
     """
-    while (a % b).degree:
+    assert a.basic_data_type().__name__ == b.basic_data_type().__name__
+    while (a % b).degree():
         _mid = b
         b = a % b
         a = _mid
@@ -268,9 +286,10 @@ def greatest_common_divisor_with_coefficient_in_polynomial(a: Polynomial, b: Pol
     :param b: (Polynomial)
     :return: (tuple) the greatest common divisor, x, y
     """
-    if (a % b).degree == 0:
-        _y = Polynomial([~b.coefficient[-1]])
-        return b.monic(), Polynomial([Fraction(0, 1)]), _y
+    assert a.basic_data_type().__name__ == b.basic_data_type().__name__
+    if (a % b).degree() == 0:
+        _y = Polynomial([Meta.get_meta(b.coefficient[-1], 'ONE') / b.coefficient[-1]])
+        return b.monic(), Polynomial([Meta.get_meta(b.coefficient[-1], 'ZERO')]), _y
     else:
         __greatest_common_divisor, __x, __y = greatest_common_divisor_with_coefficient_in_polynomial(b, a % b)
         _x = __y

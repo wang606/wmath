@@ -1,9 +1,10 @@
+# [TODO]
 # introduce
 'wmath' is a simple mathematical package designed by a bored undergraduate who wants to review math and python at the same time.
 ## features:
 - <font color=#ff0000>wmath use a class called '**Meta**' to manage the global meta information, which is not allowed to be instantiated</font>
-- <font color=#ff0000>wmath use class **Fraction** as its basic data type, since wmath focus on rational operation</font> 
-- functions defined in wmath almost wouldn't change the value of pointer parameter
+- <font color=#ff0000>wmath use class **Fraction** as one of its basic data types, since wmath mainly focus on rational operation</font> 
+- <font color=#ff0000>param '**_new**' is a bool data, included in many methods in wmath, that decides whether to return a brand-new data or apply change on {self}</font>
 ## modules
 wmath contains the following modules: 
 - meta.py ------ manage the global meta information
@@ -46,6 +47,7 @@ define meta information in math.
     *** it's strongly discouraged to instantiate this class. meta information is expected to be uniform. ***
 
     if you want to add another terms or class under Meta, please use the Constant() instantiation.
+    *** classification by terms is encouraged ! ***
 
     for example, if you want to add a MAX as a term, you should use the following statement:
     `Meta.MAX = Constant()`
@@ -81,21 +83,12 @@ define meta information in math.
   - ZERO.int = 0
   - ZERO.float = 0.0
   - ZERO.complex = 0 + 0j
-- int
-  - int.ONE = 1
-  - int.ZERO = 0
-- float
-  - float.ONE = 1.0
-  - float.ZERO = 0.0
-- complex
-  - complex.ONE = 1 + 0j
-  - complex.ZERO = 0 + 0j
-### discriminate(item, _term: str, _class: type = None)
+### determine(item, _term: str, _class: type = None)
 ```markdown
 if _class is not None:
-    discriminate {item} is whether the '{_term}' in class {_class}.
+    determine if {item} is the '{_term}' in class {_class}.
 else:
-    discriminate {item} is whether the '{_term}' in class {item} belongs to.
+    determine if {item} is the '{_term}' in class {item} belongs to.
 *** pay attention! this function would check terms first. ***
 for example: Meta.ONE.int = 2 while Meta.int.ONE = 1 and item = 1,  _term = 'ONE', _class = int or None,
 then the result would be False, since Meta.ONE.int exists and is not equal to item.
