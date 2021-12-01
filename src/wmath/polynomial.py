@@ -1,6 +1,6 @@
 """
 polynomial.py
-this script is response for the related problems in rational polynomial.
+this script is response for the related problems in polynomial.
 """
 from wmath.meta import Meta
 from wmath.number_theory import (greatest_common_divisor_in_list,
@@ -126,9 +126,17 @@ class Polynomial(Paradigm):
         return _pow
 
     def basic_data_type(self):
+        """
+        basic data type of this Polynomial.
+        :return: (type)
+        """
         return type(self.coefficient[-1])
 
     def degree(self):
+        """
+        degree of this polynomial.
+        :return: (int)
+        """
         return len(self.coefficient) - 1
 
     def value(self, x):
@@ -190,7 +198,7 @@ class Polynomial(Paradigm):
     def times(self, n, degree: int = 0, _new: bool = False):
         """
         a new polynomial whose value is self * (n)x**(degree)
-        _new decides whether to return a new polynomial or applying change on {self}.
+        _new decides whether to return the new polynomial or applying change on {self}.
         :param n: (self.basic_data_type())
         :param degree: (int)
         :param _new: (bool)

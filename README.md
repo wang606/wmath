@@ -1,4 +1,3 @@
-# [TODO]
 # introduce
 'wmath' is a simple mathematical package designed by a bored undergraduate who wants to review math and python at the same time.
 ## features:
@@ -24,77 +23,123 @@ then you can add constants under it, such as `a.NAME = 'a'`
 after that, you can't change the value of a.NAME. 
     __setattr__(self, key, value)
 ```
-- value_of(self, key: str)
-```markdown
-designed for class, such as int, float, complex and so on.
-you can define your own class's constant of course.
-    :param key: (str)
-    :return: self.__dict__[key]
-```
-- in_type(self, class_type: type)
-```markdown
-designed for terms, such as ONE, ZERO and so on.
-you can define your own term's constant of course.
-    :param class_type: (type)
-    :return: self.__dict__[class_type.__name__]
-```
 ### <font color=#ff0000>Meta</font>
 <font color=#ff0000>this part is very important !</font>
 ```markdown
 (class)
-define meta information in math.
+define Meta information in math.
 
-    *** it's strongly discouraged to instantiate this class. meta information is expected to be uniform. ***
+    *** it's strongly discouraged to instantiate this class. Meta information is expected to be uniform. ***
 
-    if you want to add another terms or class under Meta, please use the Constant() instantiation.
+    # basic information
+    Meta use class Constant() as its middle nodes' type,
+    and Meta's end node is usually a constant data or a lambda expression or a small function.
+    the general structure of Meta usually looks like this:
+    Meta:
+        |- CONST:
+            |- PI: (float) 3.141592653589793
+            |- E: (float) 2.718281828459045
+            |- ...
+        |- GET:
+            |- ONE:
+                |- int: (lambda) x: 1
+                |- float: (lambda) x: 1.0
+                |- complex: (lambda) x: 1 + 0j
+                |- ...
+            |- ZERO:
+                |- int: (lambda) x: 0
+                |- float: (lambda) x: 0.0
+                |- complex: (lambda) x: 0 + 0j
+                |- ...
+            |- ANY:
+                |- ...
+            |- ...
+        |- DETERMINE:
+            |- {introduced as below}
+
+    as above, Meta has three basic elements: CONST, GET, DETERMINE.
+    CONST is used to store consistent constant in math, such as PI, E.
+    GET is used to define terms in different class/type/field, such as ONE, ZERO.
+    DETERMINE is used to determine if a variant is the specific value/term in specific class/type/field
+    *** it's discouraged to add another basic elements unless you know well. ***
+
+    # CONST
+    if you want to add your own consistent constants, use CONST please. the statement looks like this:
+    `Meta.CONST.YOUR_CONSTANT_NAME = 348236` (348236 is just a example <_<)
+
+    # GET
+    if you want to add another terms or classes under Meta.GET, please use the Constant() instantiation.
     *** classification by terms is encouraged ! ***
 
-    for example, if you want to add a MAX as a term, you should use the following statement:
-    `Meta.MAX = Constant()`
-    and then add its value in different class, such as:
-    *** make sure the class name is correct ! *** 
-    `Meta.MAX.int = 999999999` (of course, it's just an example >_<)
-    then you can use `Meta.MAX.in_type(int)` or just `Meta.MAX.int` to access this value.
+        for example, if you want to add a MAX as a term, you should use the following statement:
+        `Meta.GET.MAX = Constant()`
+        and then add its value in different class/type/field, such as:
+        *** make sure the class name is correct ! ***
+        `Meta.GET.MAX.int = lambda x: 999999999` (of course, it's just an example >_<)
+        then you can use function `get_meta(item, _term: str, _class: type = None)` to access this value.
 
-    alternatively, you can also add your own class under the Meta class, such as:
-    `Meta.YOUR_CLASS_NAME = Constant()`
-    and then add its various values of different terms, such as:
-    *** keep case consistent before and after ***
-    `Meta.YOUR_CLASS_NAME.ZERO = YOUR_CLASS_NAME(0)`
-    then you can use `Meta.YOUR_CLASS_NAME.value_of('ZERO')` or just `Meta.YOUR_CLASS_NAME.ZERO` to access this value. 
-    
+        alternatively, you can classify things by class/type/field, though it's not encouraged, such as:
+        `Meta.YOUR_CLASS_NAME = Constant()`
+        and then add its various values of different terms, such as:
+        *** keep case consistent before and after ***
+        `Meta.GET.YOUR_CLASS_NAME.ZERO = lambda x: YOUR_CLASS_NAME(0, x)`
+
+    # DETERMINE
+    usually, this node is not your concern.
+    but if you want to specify the behavior of function `determine_meta(item, _term: str, _class: type = None)`,
+    where the param {_class} or the type of param {item} is your interest class/type/field,
+    you can define the value of `Meta.DETERMINE.{{term}}.{{class/type/field}}` or
+    `Meta.DETERMINE.{{class/type/field}}.{{term}}`, which is usually a small function.
+    by default, the function `determine_meta(item, _term: str, _class: type = None)` would return whether {item}
+    is equal to `get_meta(item, _term: str, _class: type = None)`.
+
+        for example, in class Fraction, where Meta.GET.ONE.Fraction = lambda x: Fraction(1), determine_meta(
+        Fraction(2), 'ONE') is False while determine_meta(Fraction(1), 'ONE') is True.
+
     be careful !!!
     once the special value under your term or class is defined, it couldn't be modified,
     unless you instantiate a Constant() again.
-    for example, you couldn't use `Meta.MAX.int = 100000000` after you had stated `Meta.MAX.int = 999999999`.
-    but you could use `Meta.MAX = Constant()` to redefine the Meta.MAX, that would clear up all values of the old one. 
-    it's designed to protect the meta information.
+    for example, you couldn't use `Meta.GET.MAX.int = lambda x: 100000000` after
+    you had stated `Meta.GET.MAX.int = lambda x: 999999999`.
+    but you could use `Meta.GET.MAX = Constant()` to redefine the Meta.GET.MAX,
+    that would clear up all values of the old one.
+
+    it's designed to protect the Meta information.
         
     __setattr__(self, key, value)
 ```
 - CONST
   - CONST.PI = 3.141592653589793
   - CONST.E = 2.718281828459045
-- ONE
-  - ONE.int = 1
-  - ONE.float = 1.0
-  - ONE.complex = 1 + 0j
-- ZERO
-  - ZERO.int = 0
-  - ZERO.float = 0.0
-  - ZERO.complex = 0 + 0j
-### determine(item, _term: str, _class: type = None)
+- GET
+  - GET.ONE = Constant()
+  - GET.ZERO = Constant()
+  - GET.ANY = Constant()
+- DETERMINE
+- get_meta(item: object, _term: str, _class: type = None)
 ```markdown
+(function)
+get the meta information of {{_term}} in {{_class}} or type(item) if {{_class}} is None.
+*** pay attention! this function would check terms first. ***
+    :param item: (any) parameter which would specify the class/type/field when _class is None
+    :param _term: (str) specify the term
+    :param _class: (type) specify the class/type/field
+    :return: Meta.GET.{{_term}}.{{_class}}(item) or Meta.GET.{{_class}}.{{_term}}(item)
+```
+- determine(item, _term: str, _class: type = None)
+```markdown
+(function)
 if _class is not None:
     determine if {item} is the '{_term}' in class {_class}.
 else:
     determine if {item} is the '{_term}' in class {item} belongs to.
 *** pay attention! this function would check terms first. ***
-for example: Meta.ONE.int = 2 while Meta.int.ONE = 1 and item = 1,  _term = 'ONE', _class = int or None,
-then the result would be False, since Meta.ONE.int exists and is not equal to item.
+for example: when Meta.GET.ONE.int(x) = 2 and Meta.GET.int.ONE(x) = 1, if the parameters is
+(item = 1,  _term = 'ONE', _class = int or None), the result would be False,
+since Meta.ONE.int() exists and is not equal to item.
     :param item: (any)
-    :param _term: (str) specific term in some class, such as ONE, ZERO, MAX, so on
-    :param _class: (type) if you want to specify a specific class, use this parameter
+    :param _term: (str) specific term in class/type/field, such as ONE, ZERO, MAX, so on
+    :param _class: (type) if you want to specify a specific class/type/field, use this parameter
     :return: (bool) True for yes, False for no
 ```
 ## number_theory.py
@@ -133,6 +178,7 @@ if x < 0, then return the result of -x.
 ```
 ### factor(x: int)
 ```markdown
+(function)
 calc all factors of int x.
 if x is zero, then return [].
 if x < 0, then return the result of -x.
@@ -149,12 +195,14 @@ calc the greatest common divisor between a and b.
 ```
 ### greatest_common_divisor_in_list(a: list)
 ```markdown
+(function)
 calc the greatest common divisor among items in a.
     :param a: (list) integer
     :return: (int) the greatest common divisor
 ```
 ### least_common_multiple(a: int, b: int)
 ```markdown
+(function)
 calc the least common multiple between a and b.
     :param a: (int)
     :param b: (int)
@@ -162,6 +210,7 @@ calc the least common multiple between a and b.
 ```
 ### least_common_multiple_in_list(a: list)
 ```markdown
+(function)
 calc the least common multiple among items in a.
     :param a: (list) integer
     :return: (int) the least common multiple
@@ -177,6 +226,7 @@ a * x + b * y = the greatest common divisor.
 ```
 ### inverse(a: int, n: int)
 ```markdown
+(function)
 calc the inverse of a in the case of module n, where a and n must be mutually prime.
 a * x = 1 (mod n)
     :param a: (int)
@@ -190,6 +240,13 @@ a * x = 1 (mod n)
 (class)
 define the class of fraction in math and operation among them.
     __init__(self, molecule: int, denominator: int)
+        {x} accept bool, int, float, str and Fraction self type.
+        for example : (True)=>1/1, (3)=>3/1, (9.3)=>93/10, ('2.0/3.6')=>5/9, (Fraction(2, 3))=>2/3
+        when there are two params in {x}, which is a list or tuple,
+        the first would be considered as molecule, and second as denominator.
+        for example : (2, 3)=>2/3, [3.4, '3/2']=>17/75, ('4', True)=>4/1
+        *** denominator can't be zero ! ***
+        :param x: (bool | int | float | str | Fraction | tuple | list)
     __getattr__(self, item)
     __setattr__(self, key, value)
     __str__(self)
@@ -209,21 +266,8 @@ define the class of fraction in math and operation among them.
 ```
 - formula(self)
 ```markdown
+(function)
     :return: (string) the formula form string of the fraction 
-```
-### number2fraction(x)
-```markdown
-(function)
-convert real number into fraction.
-    :param x: (bool | int | float)
-    :return: (Fraction) the fraction form of x
-```
-### str2fraction(x: str)
-```markdown
-(function)
-convert string like '2/3' or '3.3' or '4' into a fraction.
-    :param x: (str)
-    :return: (fraction)
 ```
 ### list2fraction(x: list)
 ```markdown
@@ -246,10 +290,26 @@ it's very useful when you want to print a n dimension list while some items in i
 ```
 ### list2float(x: list)
 ```markdown
+(function)
 covert all items into float in an any dimension list.
 it's very useful when you want to convert fractions into float in a multiple dimension list.
     :param x: (list)
     :return: (list of only float)
+```
+## paradigm.py
+### Paradigm
+```markdown
+(class)
+it's base for many class related to math.
+    __init__(self)
+```
+- basic_data_type(self)
+```markdown
+(function)
+```
+- formula(self)
+```markdown
+(function)
 ```
 ## polynomial.py
 ### Polynomial
@@ -271,51 +331,74 @@ define the class of polynomial and related operations among them.
     __mod__(self, other)
     __pow__(self, power: int, modulo=None)
 ```
-- value(self, x: Fraction)
+- basic_data_type(self)
 ```markdown
+(function)
+basic data type of this Polynomial.
+    :return: (type)
+```
+- degree(self)
+```markdown
+(function)
+degree of this polynomial. 
+    :return: (int)
+```
+- value(self, x)
+```markdown
+(function)
 calc the value of the corresponding polynomial function where x is designated.
-    :param x: (Fraction) independent variable
-    :return: (Fraction) value
+    :param x: (self.basic_data_type()) independent variable
+    :return: (self.basic_data_type()) value
 ```
-- adjust(self)
+- monic(self, _new: bool = False)
 ```markdown
-manually adjust the polynomial after you changed the value 'in' the coefficient, 
-while didn't fire the __setattr__() function since the coefficient is a pointer.
-    :return: (Polynomial) self after adjust
-```
-- monic(self)
-```markdown
+(function)
 return a monic polynomial with a same coefficient ratios of {self}. 
+_new decides whether to return a new polynomial or applying change on {self}.
+    :param _new: (bool)
     :return: (Polynomial) as above
 ```
-- primitive(self)
+- primitive(self, _new: bool = False)
 ```markdown
-return a primitive polynomial with a same coefficient ratios of {self}. 
+(function)
+*** this function is valid only when self.basic_data_type() is Fraction ! ***
+return a primitive polynomial with a same coefficient ratios of {self}.
+_new decides whether to return a new polynomial or applying change on {self}.
+    :param _new: (bool)
     :return: (Polynomial) as above
 ```
-- times(self, n: Fraction, degree: int = 0)
+- times(self, n, degree: int = 0, _new: bool = False)
 ```markdown
+(function)
 a new polynomial whose value is self * (n)x**(degree)
-    :param n: (Fraction)
+_new decides whether to return the new polynomial or applying change on {self}.
+    :param n: (self.basic_data_type())
     :param degree: (int)
+    :param _new: (bool)
     :return: (Polynomial) the new polynomial
 ```
 - rational_roots(self)
 ```markdown
+(function)
+*** this function is valid only when self.basic_data_type() is Fraction ! ***
 calc all rational roots in the corresponding polynomial function.
     :return: (list of Fraction) all rational roots
 ```
 - formula(self)
 ```markdown
+(function)
     :return: (string) the formula form string of the fraction
 ```
 - is_irreducible_according_eisenstein(self):
 ```markdown
+(function)
+*** this function is valid only when self.basic_data_type() is Fraction ! ***
 judge whether the polynomial is irreducible according eisenstein discriminant method.
     :return: (bool) True for irreducible, and False for unclear rather than reducible
 ```
 ### greatest_common_divisor_in_polynomial(a: Polynomial, b: Polynomial)
 ```markdown
+(function)
 this function can figure out the greatest common divisor between a and b.
 the result polynomial is monic.
 (this function wouldn't influence the origin value of a or b although it looks like dangerous!
@@ -326,6 +409,7 @@ this characteristic is decided by python, i have no idea. ^_^)
 ```
 ### greatest_common_divisor_with_coefficient_in_polynomial(a: Polynomial, b: Polynomial)
 ```markdown
+(function)
 calc the greatest common divisor between a and b, and find two polynomials x, y to fit formula:
 a * x + b * y = the greatest common divisor.
     :param a: (Polynomial)
@@ -336,39 +420,142 @@ a * x + b * y = the greatest common divisor.
 ### Matrix
 ```markdown
 (class)
-define the class of matrix in the rational number field and related operations among them.
+define the class of matrix and related operations among them.
     __init__(self, kernel: list)
     __str__(self)
+    __invert__(self)
     __eq__(self, other)
     __pos__(self)
     __neg__(self)
     __add__(self)
     __sub__(self)
     __mul__(self)
+    __truediv__(self, other)
+```
+- basic_data_type(self)
+```markdown
+(function)
+basic data type of this matrix. 
+    :return: (type)
+```
+- formula(self)
+```markdown
+(function)
+    :return: (string) the formula form string of the matrix
 ```
 - size(self)
 ```markdown
+(function)
 total number of rows and columns.
     :return: (tuple)
 ```
 - part(self, rows, cols):
 ```markdown
+(function)
 return a new Matrix with values deep-copied from {self}, specified by {rows} and {cols}.
-if rows(cols) is a tuple like (a1, a2), that means from row(col) a1 to row(col) a2, with a2 not included.
-if rows(cols) is a list like [a1, a2, ...], that means row(col) a1, a2, ..., with everyone included.
+_rows(_cols) accept range (_from, _to, _step) or list [a1, a2, ...] type.
     :param rows: (tuple or list of int)
     :param cols: (tuple or list of int)
     :return: (Matrix)
 ```
+- fill(self, _rows, _cols, other, _new=False)
+```markdown
+(function)
+fill specific part of {self} with corresponding values in {other}.
+the part is specified by {_rows} and {_cols}.
+the size of {other} must be bigger than or equal to (len(_rows), len(_cols)).
+    :param _rows: (range or list of int)
+    :param _cols:(range or list of int)
+    :param _new: (bool) (bool) True for a new matrix, False for no
+    :param other: (Matrix or list2d or tuple with the same basic_data_type of self)
+    :return: (Matrix) if _new: a new matrix, else: self after filling
+```
+- times(self, _times, _new: bool = False, _rows=None, _cols=None)
+```markdown
+(function)
+multiply each fraction in {self} by _times.
+if _rows(_cols) is not None, it would only multiply the specific rows(cols).
+_rows(_cols) accept range (_from, _to, _step) or list [a1, a2, ...] type.
+_new decides whether to return a new matrix or applying change on {self}.
+    :param _times: (self.basic_data_type()) times
+    :param _new: (bool) True for a new matrix, False for no
+    :param _rows: (range or list of int) keep None if you want to change all rows
+    :param _cols: (range or list of int) keep None if you want to change all cols
+    :return: (Matrix) if _new: a new matrix, else: self after multiplication
+```
+- transpose(self, _new: bool = False)
+```markdown
+(function)
+transpose
+_new decides whether to return a new matrix or applying change on {self}.
+    :param _new: (bool)
+    :return: (Matrix) if _new: a new matrix, else: self after transpose
+```
+- upper_triangle(self, standardized: bool = False, _new: bool = False)
+```markdown
+(function)
+turn any matrix into stepped or standardized stepped matrix.
+    :param standardized: (bool)
+    :param _new: (bool)
+    :return: (Matrix) if _new: a new matrix, else: self after stepped or standardized stepped
+```
+- rank(self)
+```markdown
+(function)
+rank of matrix.
+    :return: (int) rank
+```
 - determinant(self)
 ```markdown
+(function)
 calc determinant of a square matrix.
     :return: (Fraction) determinant
 ```
-### 
-determinant_upper_triangle(x: list)
+- inverse(self, _new: bool = False)
 ```markdown
-calc determinant of x as a 2d Matrix by upper-triangle method.
-    :param x: (list2d of Fraction)
-    :return: (Fraction) determinant
+(function)
+inverse
+_new decides whether to return a new matrix or applying change on {self}.
+    :param _new: (bool)
+    :return: (Matrix) if _new: a new matrix, else: self after inverse
+```
+- accompany(self)
+```markdown
+(function)
+accompany matrix
+    :return: (Matrix) if _new: a new matrix, else: self after turning to its accompany matrix
+```
+### matrix_zero(_row: int, _col: int, _filled)
+```markdown
+(function)
+return a matrix filled with {_filled}, with a size (_row, _col).
+    :param _row: (int)
+    :param _col: (int)
+    :param _filled: (any)
+    :return: (Matrix)
+```
+### matrix_one(_row: int, _col: int, _value)
+```markdown
+(function)
+return a 'E' matrix with {_value} on the diagonal, with a size (_row, _col).
+    :param _row: (int)
+    :param _col: (int)
+    :param _value: (any)
+    :return: (Matrix)
+```
+### matrix_horizontal_stack(a: Matrix, b: Matrix)
+```markdown
+(function)
+stack two matrices horizontally. 
+    :param a: (Matrix)
+    :param b: (Matrix)
+    :return: (Matrix)
+```
+### matrix_vertical_stack(a: Matrix, b:  Matrix)
+```markdown
+(function)
+stacking two matrices vertically. 
+    :param a: (Matrix)
+    :param b: (Matrix)
+    :return: (Matrix)
 ```

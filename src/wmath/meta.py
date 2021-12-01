@@ -39,13 +39,14 @@ class Meta:
                 |- int: (lambda) x: 1
                 |- float: (lambda) x: 1.0
                 |- complex: (lambda) x: 1 + 0j
+                |- ...
             |- ZERO:
                 |- int: (lambda) x: 0
                 |- float: (lambda) x: 0.0
                 |- complex: (lambda) x: 0 + 0j
-            |- int: {if you classify by class/type/field}
-                |- ONE: (lambda) x: 1
-                |- ZERO: (lambda) x: 0
+                |- ...
+            |- ANY:
+                |- ...
             |- ...
         |- DETERMINE:
             |- {introduced as below}
@@ -87,7 +88,7 @@ class Meta:
     is equal to `get_meta(item, _term: str, _class: type = None)`.
 
         for example, in class Fraction, where Meta.GET.ONE.Fraction = lambda x: Fraction(1), determine_meta(
-        Fraction(2), 'ONE', None) is False while determine_meta(Fraction(1), 'ONE', None) is True.
+        Fraction(2), 'ONE') is False while determine_meta(Fraction(1), 'ONE') is True.
 
     be careful !!!
     once the special value under your term or class is defined, it couldn't be modified,
@@ -114,16 +115,12 @@ class Meta:
     """
         classification by terms. more encouraged. 
     """
+    # GET
     GET.ONE = Constant()
-    GET.ONE.int = lambda x: 1
-    GET.ONE.float = lambda x: 1.0
-    GET.ONE.complex = lambda x: 1 + 0j
-
     GET.ZERO = Constant()
-    GET.ZERO.int = lambda x: 0
-    GET.ZERO.float = lambda x: 0.0
-    GET.ZERO.complex = lambda x: 0 + 0j
+    GET.ANY = Constant()
 
+    # DETERMINE
     DETERMINE.ONE = Constant()
     DETERMINE.ZERO = Constant()
 

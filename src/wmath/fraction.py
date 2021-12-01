@@ -29,7 +29,10 @@ class Fraction:
             _x = str(_x)
             if '/' in _x:
                 _x = _x.split('/')
-                return _convert_to_fraction(_x[0]), _convert_to_fraction(_x[1])
+                _molecule_1, _denominator_1 = _convert_to_fraction(_x[0])
+                _molecule_2, _denominator_2 = _convert_to_fraction(_x[1])
+                _molecule, _denominator = _molecule_1 * _denominator_2, _molecule_2 * _denominator_1
+                return _molecule, _denominator
             _molecule, _denominator = 1, 1
             if 'e' in _x:
                 _exp = int(_x.split('e')[-1])
