@@ -1,6 +1,7 @@
 import wmath
 import random
 import time
+import copy
 
 
 def get_random_list2d(m, n):
@@ -25,8 +26,11 @@ def get_random_float_list2d(m, n):
 
 
 start_time = time.time()
-a = wmath.Meta.get_meta(wmath.Polynomial([1]), 'ANY')
-b = wmath.Meta.get_meta(wmath.Polynomial([1, 3]), 'ANY')
-print(a == b)
+a = wmath.Matrix(wmath.list2fraction([[1, 1, -3, -1], [3, -1, -3, 4], [1, 5, -9, -8]]))
+b = wmath.Matrix(wmath.list2fraction([[1], [4], [0]]))
+c = wmath.non_homogeneous_linear_equations(a, b)
+for i in c[0]:
+    print(i.formula(), end=', ')
+print(c[1][0].formula())
 end_time = time.time()
 print(end_time - start_time)

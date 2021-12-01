@@ -214,19 +214,27 @@ class Matrix(Paradigm):
             self.kernel = _kernel
             return self
 
-    def upper_triangle(self, standardized: bool = False, _new: bool = False):
+    def stepped(self, standardized: bool = False, simplified: bool = False, _new: bool = False,
+                _neg_needed: bool = False, _dependent_cols_needed: bool = False):
         """
-        turn any matrix into stepped or standardized stepped matrix.
+        turn any matrix into stepped or standardized stepped or simplified stepped matrix.
+        :param simplified: (bool)
         :param standardized: (bool)
         :param _new: (bool)
-        :return: (Matrix) if _new: a new matrix, else: self after stepped or standardized stepped
+        :param _neg_needed: (bool)
+        :param _dependent_cols_needed: (bool)
+        :return: (Matrix) if _new: a new matrix, else: self after stepped or standardized stepped or simplified stepped.
+            (multi) Matrix as above, [_neg: (bool) if _neg_needed], [_dependent_cols: (list) if _dependent_cols_needed]
         """
         if _new:
             _self = +self
         else:
             _self = self
 
+        # dependent_cols and neg
+        dependent_cols = []
         _row, _col = 0, 0
+        _neg = False
         while _row < _self.size()[0] and _col < _self.size()[1]:
 
             # skip rows with a 'zero' beginning
@@ -236,6 +244,7 @@ class Matrix(Paradigm):
             if __row == _self.size()[0]:
                 _col += 1
                 continue
+            dependent_cols.append(_col)
 
             # upper-triangle method
             for ___row in range(__row + 1, _self.size()[0]):
@@ -249,41 +258,56 @@ class Matrix(Paradigm):
                 _list = _self.kernel[_row]
                 _self.kernel[_row] = _self.kernel[__row]
                 _self.kernel[__row] = _list
+                _neg = not _neg
 
             _col += 1
             _row += 1
 
-        if standardized:
-            _row, _col = 0, 0
-            while _row < _self.size()[0] and _col < _self.size()[1]:
-                while _col < self.size()[1] and Meta.determine_meta(_self.kernel[_row][_col], 'ZERO'):
-                    _col += 1
-                if _col == _self.size()[1]:
-                    break
-                for __col in range(_col + 1, _self.size()[1]):
-                    _self.kernel[_row][__col] /= _self.kernel[_row][_col]
-                _self.kernel[_row][_col] = Meta.get_meta(_self.kernel[_row][_col], 'ONE')
-                _row += 1
-                _col += 1
+        # simplified
+        if simplified:
 
-        return _self
+            # independent_cols
+            independent_cols = []
+            for _i in range(_self.size()[1]):
+                if _i not in dependent_cols:
+                    independent_cols.append(_i)
+
+            for _i in range(len(dependent_cols) - 1, -1, -1):
+                for __row in range(_i):
+                    __times = _self.kernel[__row][dependent_cols[_i]] / _self.kernel[_i][dependent_cols[_i]]
+                    for __col in independent_cols:
+                        if __col > dependent_cols[_i]:
+                            _self.kernel[__row][__col] -= __times * _self.kernel[_i][__col]
+                    _self.kernel[__row][dependent_cols[_i]] = Meta.get_meta(_self.kernel[-1][-1], 'ZERO')
+                for __col in independent_cols:
+                    if __col > dependent_cols[_i]:
+                        _self.kernel[_i][__col] /= _self.kernel[_i][dependent_cols[_i]]
+                _self.kernel[_i][dependent_cols[_i]] = Meta.get_meta(_self.kernel[-1][-1], 'ONE')
+        else:
+
+            # standardized
+            if standardized:
+                for _i in range(len(dependent_cols) - 1, -1, -1):
+                    for __col in range(dependent_cols[_i] + 1, _self.size()[1]):
+                        _self.kernel[_i][__col] /= _self.kernel[_i][dependent_cols[_i]]
+                    _self.kernel[_i][dependent_cols[_i]] = Meta.get_meta(_self.kernel[-1][-1], 'ONE')
+
+        if _neg_needed and _dependent_cols_needed:
+            return _self, _neg, dependent_cols
+        elif _neg_needed and ~_dependent_cols_needed:
+            return _self, _neg
+        elif ~_neg_needed and _dependent_cols_needed:
+            return _self, dependent_cols
+        else:
+            return _self
 
     def rank(self):
         """
         rank of matrix.
         :return: (int) rank
         """
-        _self = self.upper_triangle(_new=True)
-        _rank, _row, _col = 0, 0, 0
-        while _row < _self.size()[0] and _col < self.size()[1]:
-            while _col < self.size()[1] and Meta.determine_meta(_self.kernel[_row][_col], 'ZERO'):
-                _col += 1
-            if _col == _self.size()[1]:
-                break
-            _rank += 1
-            _row += 1
-            _col += 1
-        return _rank
+        _, dependent_cols = self.stepped(_new=True, _dependent_cols_needed=True)
+        return len(dependent_cols)
 
     def determinant(self):
         """
@@ -291,40 +315,15 @@ class Matrix(Paradigm):
         :return: (Fraction) determinant
         """
         assert self.size()[0] == self.size()[1]
-        _kernel = (+self).kernel
-        _len = len(_kernel)
-        _neg = False
-
-        for _index in range(_len):
-
-            # skip rows with a 'zero' beginning
-            _row = _index
-            while _row < _len and Meta.determine_meta(_kernel[_row][_index], 'ZERO'):
-                _row += 1
-            if _row == _len:
-                return Meta.get_meta(_kernel[-1][-1], 'ZERO')
-
-            # upper-triangle method
-            for __row in range(_row + 1, _len):
-                __times = _kernel[__row][_index] / _kernel[_row][_index]
-                for __col in range(_index + 1, _len):
-                    _kernel[__row][__col] -= __times * _kernel[_row][__col]
-
-            # switch position if necessary
-            if _row != _index:
-                _list = _kernel[_index]
-                _kernel[_index] = _kernel[_row]
-                _kernel[_row] = _list
-                _neg = not _neg
-
-        # cumulative multiplication
-        if _neg ^ (_len % 2):
-            _determinant = -Meta.get_meta(_kernel[-1][-1], 'ONE')
+        _self, _neg, _dependent_cols = self.stepped(_new=True, _neg_needed=True, _dependent_cols_needed=True)
+        if len(_dependent_cols) < _self.size()[0]:
+            return Meta.get_meta(_self.kernel[-1][-1], 'ZERO')
+        if _neg ^ (_self.size()[0] % 2):
+            _determinant = -Meta.get_meta(_self.kernel[-1][-1], 'ONE')
         else:
-            _determinant = Meta.get_meta(_kernel[-1][-1], 'ONE')
-        for _index in range(_len):
-            _determinant *= _kernel[_index][_index]
-
+            _determinant = Meta.get_meta(_self.kernel[-1][-1], 'ONE')
+        for _index in _dependent_cols:
+            _determinant *= _self.kernel[_index][_index]
         return _determinant
 
     def inverse(self, _new: bool = False):
@@ -385,7 +384,7 @@ class Matrix(Paradigm):
             return self
 
     def accompany(self):
-        """[TODO]
+        """
         accompany matrix
         :return: (Matrix) if _new: a new matrix, else: self after turning to its accompany matrix
         """
@@ -432,41 +431,114 @@ def matrix_one(_row: int, _col: int, _value):
     return Matrix(_kernel)
 
 
-def matrix_horizontal_stack(a: Matrix, b: Matrix):
+def matrix_horizontal_stack(matrices: list):
     """
-    stack two matrices horizontally.
-    :param a: (Matrix)
-    :param b: (Matrix)
+    stack matrices horizontally.
+    :param matrices: (list of Matrix)
     :return: (Matrix)
     """
-    assert a.basic_data_type() == b.basic_data_type()
-    assert a.size()[0] == b.size()[0]
+    assert matrices
+    for _i in range(1, len(matrices)):
+        assert matrices[_i].basic_data_type() == matrices[0].basic_data_type()
+        assert matrices[_i].size()[0] == matrices[0].size()[0]
+    _matrices = deepcopy(matrices)
     _kernel = []
-    for _i in range(a.size()[0]):
+    for _i in range(_matrices[0].size()[0]):
         _kernel.append([])
-        for _j in range(a.size()[1]):
-            _kernel[_i].append(a.kernel[_i][_j])
-        for _j in range(b.size()[1]):
-            _kernel[_i].append(b.kernel[_i][_j])
+        for _j in range(len(_matrices)):
+            for _k in range(_matrices[_j].size()[1]):
+                _kernel[_i].append(_matrices[_j].kernel[_i][_k])
     return Matrix(_kernel)
 
 
-def matrix_vertical_stack(a: Matrix, b:  Matrix):
+def matrix_vertical_stack(matrices: list):
     """
     stacking two matrices vertically.
-    :param a: (Matrix)
-    :param b: (Matrix)
+    :param matrices: (list of Matrix)
     :return: (Matrix)
     """
-    assert a.basic_data_type() == b.basic_data_type()
-    assert a.size()[1] == b.size()[1]
+    assert matrices
+    for _i in range(1, len(matrices)):
+        assert matrices[_i].basic_data_type() == matrices[0].basic_data_type()
+        assert matrices[_i].size()[1] == matrices[0].size()[1]
+    _matrices = deepcopy(matrices)
     _kernel = []
-    for _i in range(a.size()[0]):
-        _kernel.append([])
-        for _j in range(a.size()[1]):
-            _kernel[_i].append(a.kernel[_i][_j])
-    for _i in range(b.size()[0]):
-        _kernel.append([])
-        for _j in range(b.size()[1]):
-            _kernel[a.size()[0] + _i].append(b.kernel[_i])
+    _row = 0
+    for _i in range(len(_matrices)):
+        for _j in range(_matrices[_i].size()[0]):
+            _kernel.append([])
+            for _k in range(_matrices[0].size()[1]):
+                _kernel[_row + _j].append(_matrices[_i].kernel[_j][_k])
+        _row += _matrices[_i].size()[0]
     return Matrix(_kernel)
+
+
+def homogeneous_linear_equations(a: Matrix):
+    """
+    figure out the fundamental system of solutions of homogeneous linear equations: a * X = Matrix(zero).
+    :param a: (Matrix) as above
+    :return: (list of Matrix) fundamental system of solutions
+    """
+    # upper triangle
+    _a, dependent_cols = a.stepped(simplified=True, _new=True, _dependent_cols_needed=True)
+    # fundamental solutions
+    independent_cols = []
+    for _i in range(_a.size()[1]):
+        if _i not in dependent_cols:
+            independent_cols.append(_i)
+    _len = len(independent_cols)
+    _fundamental_solutions_matrix = matrix_zero(_a.size()[1], _len, Meta.get_meta(_a.kernel[-1][-1], 'ZERO'))
+    _fundamental_solutions_matrix.fill(dependent_cols, range(_len),
+                                       (-_a.part(range(_a.size()[0]), independent_cols)).kernel)
+    _fundamental_solutions_matrix.fill(independent_cols, range(_len),
+                                       matrix_one(_len, _len, Meta.get_meta(_a.kernel[-1][-1], 'ONE')).kernel)
+    _fundamental_solutions_list = [_fundamental_solutions_matrix.part(range(_a.size()[1]), [_i]) for _i in range(_len)]
+    return _fundamental_solutions_list
+
+
+def non_homogeneous_linear_equations(a: Matrix, b: Matrix):
+    """
+    figure out the fundamental system of solutions and one special solution of non homogeneous linear equations:
+    a * X = b.
+    good news ! argument {b} could be a multi-columns matrix, which means this function can solve multiple equations at
+    the same time.
+    :param a: (Matrix) as above
+    :param b: (Matrix) as above
+    :return: (list of fundamental solutions, list of special solutions)
+    """
+    assert a.basic_data_type().__name__ == b.basic_data_type().__name__
+    assert a.size()[0] == b.size()[0]
+    _a = matrix_horizontal_stack([a, b])
+    _a, dependent_cols = _a.stepped(simplified=True, _dependent_cols_needed=True)
+    # fundamental solutions
+    _dependent_cols = []
+    _independent_cols = []
+    for _i in range(a.size()[1]):
+        if _i in dependent_cols:
+            _dependent_cols.append(_i)
+        else:
+            _independent_cols.append(_i)
+    _rank = len(_dependent_cols)
+    _len = len(_independent_cols)
+    if _len == 0:
+        _fundamental_solutions_list = []
+    else:
+        _fundamental_solutions_matrix = matrix_zero(a.size()[1], _len, Meta.get_meta(_a.kernel[-1][-1], 'ZERO'))
+        _fundamental_solutions_matrix.fill(_dependent_cols, range(_len),
+                                           (-_a.part(range(_a.size()[0]), _independent_cols)).kernel)
+        _fundamental_solutions_matrix.fill(_independent_cols, range(_len),
+                                           matrix_one(_len, _len, Meta.get_meta(_a.kernel[-1][-1], 'ONE')).kernel)
+        _fundamental_solutions_list = [_fundamental_solutions_matrix.part(range(a.size()[1]), [i]) for i in range(_len)]
+    # special solutions
+    _special_solutions_list = []
+    for _i in range(b.size()[1]):
+        _row = b.size()[0] - 1
+        while Meta.determine_meta(_a.kernel[_row][a.size()[1] + _i], 'ZERO'):
+            _row -= 1
+        if _row < _rank:
+            _special_solution = matrix_zero(a.size()[1], 1, Meta.get_meta(_a.kernel[-1][-1], 'ZERO'))
+            _special_solution.fill(_dependent_cols, [0], _a.part(range(_a.size()[0]), [a.size()[1] + _i]).kernel)
+            _special_solutions_list.append(_special_solution)
+        else:
+            _special_solutions_list.append(None)
+    return _fundamental_solutions_list, _special_solutions_list

@@ -491,13 +491,17 @@ _new decides whether to return a new matrix or applying change on {self}.
     :param _new: (bool)
     :return: (Matrix) if _new: a new matrix, else: self after transpose
 ```
-- upper_triangle(self, standardized: bool = False, _new: bool = False)
+- stepped(self, standardized: bool = False, simplified: bool = False, _new: bool = False, _neg_needed: bool = False, _dependent_cols_needed: bool = False)
 ```markdown
 (function)
-turn any matrix into stepped or standardized stepped matrix.
+turn any matrix into stepped or standardized stepped or simplified stepped matrix.
+    :param simplified: (bool)
     :param standardized: (bool)
     :param _new: (bool)
-    :return: (Matrix) if _new: a new matrix, else: self after stepped or standardized stepped
+    :param _neg_needed: (bool)
+    :param _dependent_cols_needed: (bool)
+    :return: (Matrix) if _new: a new matrix, else: self after stepped or standardized stepped or simplified stepped.
+            (multi) Matrix as above, [_neg: (bool) if _neg_needed], [_dependent_cols: (list) if _dependent_cols_needed]
 ```
 - rank(self)
 ```markdown
@@ -558,4 +562,22 @@ stacking two matrices vertically.
     :param a: (Matrix)
     :param b: (Matrix)
     :return: (Matrix)
+```
+### homogeneous_linear_equations(a: Matrix)
+```markdown
+(function)
+figure out the fundamental system of solutions of homogeneous linear equations: a * X = Matrix(zero).
+    :param a: (Matrix) as above
+    :return: (list of Matrix) fundamental system of solutions
+```
+### non_homogeneous_linear_equations(a: Matrix, b: Matrix)
+```markdown
+(function)
+figure out the fundamental system of solutions and one special solution of non homogeneous linear equations:
+a * X = b.
+good news ! argument {b} could be a multi-columns matrix, which means this function can solve multiple equations at
+the same time.
+    :param a: (Matrix) as above
+    :param b: (Matrix) as above
+    :return: (list of fundamental solutions, list of special solutions)
 ```
