@@ -118,28 +118,10 @@ class Meta:
     # GET
     GET.ONE = Constant()
     GET.ZERO = Constant()
-    GET.ANY = Constant()
 
     # DETERMINE
     DETERMINE.ONE = Constant()
     DETERMINE.ZERO = Constant()
-
-    """
-        classification by class. discouraged. 
-    """
-    '''
-    GET.int = Constant()
-    GET.int.ONE = 1
-    GET.int.ZERO = 0
-    
-    GET.float = Constant()
-    GET.float.ONE = 1.0
-    GET.float.ZERO = 0.0
-    
-    GET.complex = Constant()
-    GET.complex.ONE = 1 + 0j
-    GET.complex.ZERO = 0 + 0j
-    '''
 
     def get_meta(item: object, _term: str, _class: type = None):
         """

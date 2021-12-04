@@ -9,6 +9,7 @@ wmath contains the following modules:
 - meta.py ------ manage the global meta information
 - number_theory.py ------ handling number theory problems in math
 - fraction.py ------ the operation in fraction
+- paradigm.py ------ the basic class of paradigm classes
 - polynomial.py ------ the related problems in polynomial
 - matrix.py ------ the problems related to matrix in the rational number field
 # reference
@@ -491,7 +492,7 @@ _new decides whether to return a new matrix or applying change on {self}.
     :param _new: (bool)
     :return: (Matrix) if _new: a new matrix, else: self after transpose
 ```
-- stepped(self, standardized: bool = False, simplified: bool = False, _new: bool = False, _neg_needed: bool = False, _dependent_cols_needed: bool = False)
+- stepped(self, standardized: bool = False, simplified: bool = False, _new: bool = False, _neg_needed: bool = False, _independent_cols_needed: bool = False)
 ```markdown
 (function)
 turn any matrix into stepped or standardized stepped or simplified stepped matrix.
@@ -499,9 +500,9 @@ turn any matrix into stepped or standardized stepped or simplified stepped matri
     :param standardized: (bool)
     :param _new: (bool)
     :param _neg_needed: (bool)
-    :param _dependent_cols_needed: (bool)
+    :param _independent_cols_needed: (bool)
     :return: (Matrix) if _new: a new matrix, else: self after stepped or standardized stepped or simplified stepped.
-            (multi) Matrix as above, [_neg: (bool) if _neg_needed], [_dependent_cols: (list) if _dependent_cols_needed]
+            (multi) Matrix as above, [_neg: (bool) if _neg_needed], [_independent_cols: (list) if _independent_cols_needed]
 ```
 - rank(self)
 ```markdown

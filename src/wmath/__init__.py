@@ -24,7 +24,7 @@ Meta.GET.ZERO.Polynomial = lambda x: Polynomial([Meta.get_meta(x.coefficient[-1]
         if type(x).__name__ == 'Polynomial' else Polynomial([Meta.get_meta(x, 'ZERO')])
 Meta.GET.ZERO.Matrix = lambda x: matrix_zero(x.size()[0], x.size()[1], Meta.get_meta(x.kernel[-1][-1], 'ZERO')) \
         if type(x).__name__ == 'Matrix' else matrix_zero(1, 1, Meta.get_meta(x, 'ZERO'))
-# Meta.GET.ANY
+''' # Meta.GET.ANY
 class ANY:
     def __str__(self):
         return 'any({0})'.format(type(self).__name__)
@@ -41,3 +41,4 @@ Meta.GET.ANY.complex = lambda x: type('complex', (ANY, ), {})()
 Meta.GET.ANY.Fraction = lambda x: type('Fraction', (ANY, ), {})()
 Meta.GET.ANY.Polynomial = lambda x: type('Polynomial', (ANY, ), {})()
 Meta.GET.ANY.Matrix = lambda x: type('Matrix', (ANY, ), {})()
+'''

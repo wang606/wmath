@@ -150,6 +150,53 @@ class Polynomial(Paradigm):
             _value += self.coefficient[_i] * x ** _i
         return _value
 
+    def conjugate(self, _new: bool = True):
+        """
+        conjugate
+        :param _new: (bool)
+        :return: (Polynomial)
+        """
+        if _new:
+            _self = +self
+        else:
+            _self = self
+        for _i in range(_self.degree() + 1):
+            _self.coefficient[_i] = _self.coefficient[_i].conjugate()
+        return _self
+
+    def derived(self, _new: bool = False):
+        """
+        this function is valid only when self.basic_data_type support number multiplication.
+        derived polynomial of self.
+        :param _new: (bool)
+        :return: (Polynomial)
+        """
+        _list = []
+        for _i in range(1, self.degree() + 1):
+            _list.append(self.coefficient[_i] * _i)
+        if _new:
+            return Polynomial(_list)
+        else:
+            self.coefficient = _list
+            return self
+
+    def integral(self, _new: bool = False):
+        """
+        this function is valid only when self.basic_data_type support number multiplication.
+        integral of polynomial function, with zero as its constant coefficient.
+        :param _new: (bool)
+        :return: (Polynomial)
+        """
+        _list = [None]
+        for _i in range(self.degree() + 1):
+            _list.append(self.coefficient[_i] / (_i + 1))
+        _list[0] = Meta.get_meta(_list[-1], 'ZERO')
+        if _new:
+            return Polynomial(_list)
+        else:
+            self.coefficient = _list
+            return self
+
     def monic(self, _new: bool = False):
         """
         return a monic polynomial with a same coefficient ratios of {self}.
@@ -237,6 +284,78 @@ class Polynomial(Paradigm):
                     _rational_roots.append(-_fraction)
         return _rational_roots
 
+    def real_roots(self, x_precision=1e-12, y_precision=None):
+        """
+        this function is valid only when self.basic_data_type is float.
+        return all real roots.
+        :param x_precision: (float)
+        :param y_precision: (float)
+        :return: (list of real number) real roots, with bigger further ahead
+        """
+        def __real_root_multiplication(_start: float, _pos: bool = True):
+            if self.value(_start) == 0:
+                return _start
+            _start_pos = True if self.value(_start) > 0 else False
+            x_delta = 1 if _pos else -1
+            y_delta = self.value(_start + x_delta)
+            while x_precision and abs(x_delta) > x_precision or y_precision and abs(y_delta) > y_precision:
+                try:
+                    if (y_delta < 0) ^ _start_pos:
+                        _start += x_delta
+                        x_delta *= 2
+                    else:
+                        x_delta /= 2
+                    y_delta = self.value(_start + x_delta)
+                except OverflowError:
+                    return None
+            return _start
+
+        def __real_root_dichotomy(_left: float, _right: float):
+            if self.value(_left) == 0:
+                return _left
+            if self.value(_right) == 0:
+                return _right
+            _left_pos = True if self.value(_left) > 0 else False
+            _right_pos = True if self.value(_right) > 0 else False
+            if not (_left_pos ^ _right_pos):
+                return None
+            _mid = (_right + _left) / 2
+            while x_precision and _right - _left > x_precision or y_precision and abs(self.value(_mid)) > y_precision:
+                if (self.value(_mid) > 0) ^ _left_pos:
+                    _right = _mid
+                else:
+                    _left = _mid
+                _mid = (_right + _left) / 2
+            return _mid
+
+        assert self.basic_data_type().__name__ == 'float'
+        if self.degree() == 0:
+            return []
+        if self.degree() == 1:
+            return [-self.coefficient[0] / self.coefficient[-1]]
+        _derived_real_roots = self.derived(_new=True).real_roots()
+        if _derived_real_roots:
+            _real_roots = []
+            if (self.coefficient[-1] > 0) ^ (self.value(_derived_real_roots[0]) > 0):
+                _root = __real_root_multiplication(_derived_real_roots[0], _pos=True)
+                if _root and (_root not in _real_roots):
+                    _real_roots.append(_root)
+            for _i in range(1, len(_derived_real_roots)):
+                _root = __real_root_dichotomy(_derived_real_roots[_i], _derived_real_roots[_i - 1])
+                if _root and (_root not in _real_roots):
+                    _real_roots.append(_root)
+            if (self.degree() % 2) ^ (self.coefficient[-1] > 0) ^ (self.value(_derived_real_roots[-1]) > 0):
+                _root = __real_root_multiplication(_derived_real_roots[-1], _pos=False)
+                if _root and (_root not in _real_roots):
+                    _real_roots.append(_root)
+            return _real_roots
+        else:
+            if (self.coefficient[-1] > 0) ^ (self.value(0) > 0):
+                _root = __real_root_multiplication(0, _pos=True)
+            else:
+                _root = __real_root_multiplication(0, _pos=False)
+            return [_root] if _root else []
+
     def formula(self):
         """
         :return: (string) the formula form string of the polynomial
@@ -244,11 +363,11 @@ class Polynomial(Paradigm):
         _str = ''
         if hasattr(self.basic_data_type(), 'formula'):
             for _i in range(self.degree(), 0, -1):
-                _str += self.coefficient[_i].formula() + 'x^' + str(_i) + '+'
+                _str += '(' + self.coefficient[_i].formula() + ')x^{' + str(_i) + '}+'
             _str += self.coefficient[0].formula()
         else:
             for _i in range(self.degree(), 0, -1):
-                _str += str(self.coefficient[_i]) + 'x^' + str(_i) + '+'
+                _str += '(' + str(self.coefficient[_i]) + ')x^{' + str(_i) + '}+'
             _str += str(self.coefficient[0])
         return _str
 
@@ -272,8 +391,8 @@ def greatest_common_divisor_in_polynomial(a: Polynomial, b: Polynomial):
     """
     this function can figure out the greatest common divisor between a and b.
     the result polynomial is monic.
-    (this function wouldn't influence the origin value of a or b although it looks like dangerous!
-    this characteristic is decided by python, i have no idea. ^_^)
+    (this function wouldn't influence the origin value of a or b, although it looks like dangerous!
+    this characteristic is decided by python, I have no idea. ^_^)
     :param a: (Polynomial)
     :param b: (Polynomial)
     :return: (Polynomial)

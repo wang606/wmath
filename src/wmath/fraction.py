@@ -44,6 +44,8 @@ class Fraction:
             if '.' in _x:
                 _molecule *= int(_x.split('.')[0] + _x.split('.')[-1])
                 _denominator *= pow(10, len(_x.split('.')[-1]))
+            else:
+                _molecule *= int(_x)
             return _molecule, _denominator
 
         _type = type(x).__name__
@@ -128,11 +130,15 @@ class Fraction:
         return Fraction([_molecule, _denominator])
 
     def __mul__(self, other):
+        if type(other).__name__ != 'Fraction':
+            other = Fraction(other)
         _denominator = self.denominator * other.denominator
         _molecule = self.molecule * other.molecule
         return Fraction([_molecule, _denominator])
 
     def __truediv__(self, other):
+        if type(other).__name__ != 'Fraction':
+            other = Fraction(other)
         _denominator = self.denominator * other.molecule
         _molecule = self.molecule * other.denominator
         return Fraction([_molecule, _denominator])
@@ -145,6 +151,9 @@ class Fraction:
         else:
             _molecule = pow(self.molecule, power)
         return Fraction([_molecule, _denominator])
+
+    def conjugate(self):
+        return +self
 
     def formula(self):
         """
@@ -178,7 +187,7 @@ def list2fraction(x: list):
 def list2str(x: list):
     """
     covert all items into strings in an any dimension list.
-    it's very useful when you want to print a n dimension list while some items in it is pointers.
+    it's very useful when you want to print an n dimension list while some items in it is pointers.
     :param x: (list)
     :return: (list of only strings)
     """
@@ -207,5 +216,5 @@ def list2float(x: list):
         elif type(_i).__name__ == 'str':
             _list.append(float(Fraction(_i)))
         else:
-            _list.append(_i)
+            _list.append(float(_i))
     return _list
