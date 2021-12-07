@@ -1,9 +1,10 @@
-__all__ = ['Meta', 'number_theory', 'paradigm', 'fraction', 'polynomial', 'matrix']
-from meta import *
-from number_theory import *
-from fraction import *
-from polynomial import *
-from matrix import *
+# __all__ = ['Meta', 'number_theory', 'paradigm', 'fraction', 'polynomial', 'matrix']
+from wmath.meta import *
+from wmath.number_theory import *
+from wmath.fraction import *
+from wmath.paradigm import *
+from wmath.polynomial import *
+from wmath.matrix import *
 
 
 # Meta.GET.ONE
