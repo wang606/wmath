@@ -43,34 +43,6 @@ def get_random_complex_list2d(m, n):
 
 
 start_time = time.time()
-
-# define the 'ZERO' and 'ONE' in float and Matrix
-wmath.Meta.DETERMINE.ZERO.float = lambda x: True if abs(x) < 1e-8 else False
-wmath.Meta.DETERMINE.ONE.float = lambda x: True if abs(x - 1.0) < 1e-8 else False
-wmath.Meta.DETERMINE.ZERO.Fraction = lambda x: True if abs(float(x)) < 1e-8 else False
-wmath.Meta.DETERMINE.ONE.Fraction = lambda x: True if abs(float(x) - 1.0) < 1e-8 else False
-wmath.Meta.DETERMINE.ZERO.complex = lambda x: True if abs(x) < 1e-8 else False
-wmath.Meta.DETERMINE.ONE.complex = lambda x: True if abs(x - 1.0) < 1e-8 else False
-def _determine_zero_matrix(x):
-    if type(x).__name__ == 'Matrix':
-        for _i in x.kernel:
-            for _j in _i:
-                if not wmath.Meta.determine_meta(_j, 'ZERO'):
-                    return False
-        return True
-    else:
-        return wmath.Meta.determine_meta(x, 'ZERO')
-def _determine_one_matrix(x):
-    if type(x).__name__ == 'Matrix':
-        for _i in range(min(x.size()[0], x.size()[1])):
-            if not wmath.Meta.determine_meta(x.kernel[_i][_i], 'ONE'):
-                return False
-        return True
-    else:
-        return wmath.Meta.determine_meta(x, 'ONE')
-wmath.Meta.DETERMINE.ZERO.Matrix = _determine_zero_matrix
-wmath.Meta.DETERMINE.ONE.Matrix = _determine_one_matrix
-
 # let the columns of the matrix be linearly correlated intentionally
 a = wmath.Matrix(get_random_float_list2d(10, 10))
 a = wmath.Matrix(get_random_list2d(10, 10))

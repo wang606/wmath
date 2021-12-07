@@ -3,4 +3,3 @@
 /dist/
 /src/wmath.egg-info/
 /src/wmath/__pycache__/
-/tests/test.py

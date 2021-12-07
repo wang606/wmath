@@ -26,19 +26,6 @@ def get_random_float_list2d(m, n):
 
 
 start_time = time.time()
-# sign up DETERMINE method of 'ZERO' in 'float':
-wmath.Meta.DETERMINE.ZERO.float = lambda x: True if abs(x) < 1e-8 else False
-# sign up DETERMINE method of 'ZERO' in 'Matrix':
-def __determine_zero_matrix(x):
-    if type(x).__name__ == 'Matrix':
-        for _i in x.kernel:
-            for _j in _i:
-                if not wmath.Meta.determine_meta(_j, 'ZERO'):
-                    return False
-        return True
-    else:
-        return wmath.Meta.determine_meta(x, 'ZERO')
-wmath.Meta.DETERMINE.ZERO.Matrix = __determine_zero_matrix
 # a * X = b, with result stored in c.
 a = wmath.Matrix(get_random_float_list2d(8, 8))
 b = wmath.Matrix(get_random_float_list2d(8, 4))

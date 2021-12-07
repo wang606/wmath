@@ -145,9 +145,9 @@ class Polynomial(Paradigm):
         :param x: (self.basic_data_type()) independent variable
         :return: (self.basic_data_type()) value
         """
-        _value = Meta.get_meta(self.coefficient[-1], 'ZERO')
-        for _i in range(self.degree() + 1):
-            _value += self.coefficient[_i] * x ** _i
+        _value = self.coefficient[-1]
+        for _i in range(self.degree() - 1, -1, -1):
+            _value = _value * x + self.coefficient[_i]
         return _value
 
     def conjugate(self, _new: bool = True):

@@ -234,7 +234,7 @@ class Matrix(Paradigm):
                 _self.kernel[_i][_j] *= _times
         return _self
 
-    def transpose(self, _new: bool = False):
+    def transpose(self, _new: bool = True):
         """
         transpose
         _new decides whether to return a new matrix or applying change on {self}.
@@ -267,7 +267,7 @@ class Matrix(Paradigm):
                 _self.kernel[_i][_j] = _self.kernel[_i][_j].conjugate()
         return _self
 
-    def stepped(self, standardized: bool = False, simplified: bool = False, _new: bool = False,
+    def stepped(self, standardized: bool = False, simplified: bool = False, _new: bool = True,
                 _neg_needed: bool = False, _independent_cols_needed: bool = False):
         """
         turn any matrix into stepped or standardized stepped or simplified stepped matrix.
@@ -371,7 +371,7 @@ class Matrix(Paradigm):
         rank of matrix.
         :return: (int) rank
         """
-        _, independent_cols = self.stepped(_new=True, _independent_cols_needed=True)
+        _, independent_cols = self.stepped(_independent_cols_needed=True)
         return len(independent_cols)
 
     def determinant_upper_triangle(self):
@@ -380,7 +380,7 @@ class Matrix(Paradigm):
         :return: (Fraction) determinant
         """
         assert self.size()[0] == self.size()[1]
-        _self, _neg, _independent_cols = self.stepped(_new=True, _neg_needed=True, _independent_cols_needed=True)
+        _self, _neg, _independent_cols = self.stepped(_neg_needed=True, _independent_cols_needed=True)
         if len(_independent_cols) < _self.size()[0]:
             return Meta.get_meta(_self.kernel[-1][-1], 'ZERO')
         if _neg:
@@ -508,7 +508,7 @@ class Matrix(Paradigm):
         _one = Meta.get_meta(self.kernel[-1][-1], 'ONE')
         independent_cols = []
         if not _column_linearly_independent:
-            _, independent_cols = self.stepped(_new=True, _independent_cols_needed=True)
+            _, independent_cols = self.stepped(_independent_cols_needed=True)
             _column_linearly_independent = len(independent_cols) == self.size()[1]
 
         if _column_linearly_independent:
@@ -537,7 +537,7 @@ class Matrix(Paradigm):
         else:
             independent_part = self.part(_cols=independent_cols)
             independent_unitary, _ = independent_part.qr_schmidt_decomposition(_column_linearly_independent=True)
-            dependent_unitary_list = homogeneous_linear_equations(independent_part.transpose(_new=True).conjugate())
+            dependent_unitary_list = homogeneous_linear_equations(independent_part.transpose().conjugate())
             for _i in dependent_unitary_list:
                 _i.times(_one / __inner(_i, _i) ** 0.5)
             dependent_unitary = matrix_horizontal_stack(dependent_unitary_list)
@@ -548,41 +548,45 @@ class Matrix(Paradigm):
                 if _i not in independent_cols:
                     dependent_cols.append(_i)
             _unitary.fill(dependent_unitary.kernel, _rows=None, _cols=dependent_cols)
-            _triangle = _unitary.transpose(_new=True).conjugate() * self
+            _triangle = _unitary.transpose().conjugate() * self
             return _unitary, _triangle
 
-    def upper_hessenburg(self, _new: bool = False, _unitary_need: bool = False):
+    def qr_householder_decomposition(self, _unitary_need: bool = False):
+        pass
+
+    def upper_hessenberg(self, _unitary_need: bool = False):
         """
-        make the matrix upper hessenburg.
-        unitary * self * (unitary^T.conjugate()) is a hessenburg matrix.
-        :param _new: (bool)
+        make the matrix upper hessenberg.
+        unitary * self * (unitary^T.conjugate()) is a hessenberg matrix.
         :param _unitary_need: (bool)
         :return: (Matrix or Matrix, Matrix)
         """
         assert self.size()[0] == self.size()[1]
-        if _new:
-            _self = +self
-        else:
-            _self = self
+        _self = +self
         _one = Meta.get_meta(_self.kernel[-1][-1], 'ONE')
         _unitary = matrix_one(_self.size()[0], _self.size()[1], _one)
-        for _i in range(1, _self.size()[0] - 2):
-            print(_i)
+        for _i in range(1, _self.size()[0] - 1):
             _size = _self.size()[0] - _i
             _v = _self.part(_rows=range(_i, _self.size()[0]), _cols=[_i - 1])
-            _v_norm_2 = (_v.transpose(_new=True).conjugate() * _v).kernel[0][0] ** 0.5
-            _e = matrix_one(_size, 1, _one).times(_v_norm_2)
+            _v_norm_2 = (_v.transpose() * _v.conjugate()).kernel[0][0] ** 0.5
+            _e = matrix_one(_size, 1, -(_v.kernel[0][0] / abs(_v.kernel[0][0])) * _v_norm_2)
             _u = _v - _e
-            _sub_p = matrix_one(_size, _size, _one) - (_u * _u.transpose(_new=True).conjugate()).times\
-                (_one * 2 / (_u.transpose(_new=True).conjugate() * _u).kernel[0][0])
-            _p = matrix_one(_self.size()[0], _self.size()[1], _one)
-            _p.fill(_sub_p.kernel, range(_i, _self.size()[0]), range(_i, _self.size()[1]))
-            _self = _p * _self * _p.transpose(_new=True).conjugate()
-            _unitary = _p * _unitary
+            _times = _one * 2 / (_u.transpose() * _u.conjugate()).kernel[0][0]
+            _sub_p = matrix_one(_size, _size, _one) - (_u * _u.transpose().conjugate()).times(_times)
+            _self.fill(_e.kernel, _rows=range(_i, _self.size()[0]), _cols=[_i - 1])
+            _self.fill((_self.part(_rows=range(_i), _cols=range(_i, _self.size()[1])) * _sub_p).kernel,
+                       _rows=range(_i), _cols=range(_i, _self.size()[1]))
+            _self.fill((_sub_p * _self.part(_rows=range(_i, _self.size()[0]), _cols=range(_i, _self.size()[1])) *
+                        _sub_p).kernel, _rows=range(_i, _self.size()[0]), _cols=range(_i, _self.size()[1]))
+            _unitary.fill((_sub_p * _unitary.part(_rows=range(_i, _self.size()[0]))).kernel,
+                          _rows=range(_i, _self.size()[0]))
         if _unitary_need:
             return _self, _unitary
         else:
             return _self
+
+    def givens_on_upper_hessenberg(self):
+        pass
 
 
 def matrix_zero(_row: int, _col: int, _filled):
@@ -597,15 +601,18 @@ def matrix_zero(_row: int, _col: int, _filled):
     return Matrix(_kernel)
 
 
-def matrix_one(_row: int, _col: int, _value):
+def matrix_one(_row: int, _col: int, _value, _other_value=None):
     """
     return a 'E' matrix with {_value} on the diagonal, with a size (_row, _col).
     :param _row: (int)
     :param _col: (int)
     :param _value: (any)
+    :param _other_value: (any) by default, _other_value is None, that means Meta.get_meta(_value, 'ZERO').
     :return: (Matrix)
     """
-    _kernel = [[Meta.get_meta(_value, 'ZERO') for _j in range(_col)] for _i in range(_row)]
+    if _other_value is None:
+        _other_value = Meta.get_meta(_value, 'ZERO')
+    _kernel = [[_other_value for _j in range(_col)] for _i in range(_row)]
     for _i in range(min(_row, _col)):
         _kernel[_i][_i] = _value
     return Matrix(_kernel)
@@ -660,7 +667,7 @@ def homogeneous_linear_equations(a: Matrix):
     :return: (list of Matrix) fundamental system of solutions
     """
     # upper triangle
-    _a, independent_cols = a.stepped(simplified=True, _new=True, _independent_cols_needed=True)
+    _a, independent_cols = a.stepped(simplified=True, _independent_cols_needed=True)
     # fundamental solutions
     dependent_cols = []
     for _i in range(_a.size()[1]):

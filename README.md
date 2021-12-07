@@ -1,4 +1,4 @@
-# introduce
+# introduction
 'wmath' is a simple mathematical package designed by a bored undergraduate who wants to review math and python at the same time.
 ## features:
 - wmath use a class called '**Meta**' to manage the global meta information, which is not allowed to be instantiated
