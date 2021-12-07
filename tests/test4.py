@@ -80,7 +80,7 @@ b = a.part(_rows=None, _cols=[0]).times(wmath.Meta.get_meta(a.kernel[-1][-1], 'O
 a.fill(b, _rows=None, _cols=[1])
 
 # qr decomposition
-q, r = a.qr_decomposition()
+q, r = a.qr_schmidt_decomposition()
 print(a.formula(), end='=')
 print(q.formula(), '*', r.formula())
 print('\n==========\n')

@@ -1,4 +1,4 @@
-# __all__ = ['Meta', 'number_theory', 'fraction', 'polynomial', 'matrix']
+__all__ = ['Meta', 'number_theory', 'paradigm', 'fraction', 'polynomial', 'matrix']
 from meta import *
 from number_theory import *
 from fraction import *
@@ -24,21 +24,66 @@ Meta.GET.ZERO.Polynomial = lambda x: Polynomial([Meta.get_meta(x.coefficient[-1]
         if type(x).__name__ == 'Polynomial' else Polynomial([Meta.get_meta(x, 'ZERO')])
 Meta.GET.ZERO.Matrix = lambda x: matrix_zero(x.size()[0], x.size()[1], Meta.get_meta(x.kernel[-1][-1], 'ZERO')) \
         if type(x).__name__ == 'Matrix' else matrix_zero(1, 1, Meta.get_meta(x, 'ZERO'))
-''' # Meta.GET.ANY
-class ANY:
-    def __str__(self):
-        return 'any({0})'.format(type(self).__name__)
-    def formula(self):
-        return 'any({0})'.format(type(self).__name__)
-    def __eq__(self, other):
-        if type(self).__name__ == type(other).__name__ and str(self) == str(other):
-            return True
-        else:
+# Meta.DETERMINE
+Meta.DETERMINE.ZERO.float = lambda x: True if abs(x) < 1e-8 else False
+Meta.DETERMINE.ONE.float = lambda x: True if abs(x - 1.0) < 1e-8 else False
+Meta.DETERMINE.ZERO.Fraction = lambda x: True if abs(float(x)) < 1e-8 else False
+Meta.DETERMINE.ONE.Fraction = lambda x: True if abs(float(x) - 1.0) < 1e-8 else False
+Meta.DETERMINE.ZERO.complex = lambda x: True if abs(x) < 1e-8 else False
+Meta.DETERMINE.ONE.complex = lambda x: True if abs(x - 1.0) < 1e-8 else False
+
+
+def _determine_zero_polynomial(x):
+    if type(x).__name__ == 'Polynomial':
+        for _i in x.coefficient:
+            if not Meta.determine_meta(_i, 'ZERO'):
+                return False
+        return True
+    else:
+        return Meta.determine_meta(x, 'ZERO')
+
+
+def _determine_one_polynomial(x):
+    if type(x).__name__ == 'Polynomial':
+        for _i in x.coefficient[1:]:
+            if not Meta.determine_meta(_i, 'ZERO'):
+                return False
+        if not Meta.determine_meta(x.coefficient[0], 'ONE'):
             return False
-Meta.GET.ANY.int = lambda x: type('int', (ANY, ), {})()
-Meta.GET.ANY.float = lambda x: type('float', (ANY, ), {})()
-Meta.GET.ANY.complex = lambda x: type('complex', (ANY, ), {})()
-Meta.GET.ANY.Fraction = lambda x: type('Fraction', (ANY, ), {})()
-Meta.GET.ANY.Polynomial = lambda x: type('Polynomial', (ANY, ), {})()
-Meta.GET.ANY.Matrix = lambda x: type('Matrix', (ANY, ), {})()
-'''
+        return True
+    else:
+        return Meta.determine_meta(x, 'ONE')
+
+
+Meta.DETERMINE.ZERO.Polynomial = _determine_zero_polynomial
+Meta.DETERMINE.ONE.Polynomial = _determine_one_polynomial
+
+
+def _determine_zero_matrix(x):
+    if type(x).__name__ == 'Matrix':
+        for _i in x.kernel:
+            for _j in _i:
+                if not Meta.determine_meta(_j, 'ZERO'):
+                    return False
+        return True
+    else:
+        return Meta.determine_meta(x, 'ZERO')
+
+
+def _determine_one_matrix(x):
+    if type(x).__name__ == 'Matrix':
+        for _i in range(x.size()[0]):
+            for _j in range(x.size()[1]):
+                if _i == _j:
+                    if not Meta.determine_meta(x.kernel[_i][_j], 'ONE'):
+                        return False
+                if _i != _j:
+                    if not Meta.determine_meta(x.kernel[_i][_j], 'ZERO'):
+                        return False
+        return True
+    else:
+        return Meta.determine_meta(x, 'ONE')
+
+
+Meta.DETERMINE.ZERO.Matrix = _determine_zero_matrix
+Meta.DETERMINE.ONE.Matrix = _determine_one_matrix

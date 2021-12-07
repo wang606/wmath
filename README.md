@@ -1,9 +1,9 @@
 # introduce
 'wmath' is a simple mathematical package designed by a bored undergraduate who wants to review math and python at the same time.
 ## features:
-- <font color=#ff0000>wmath use a class called '**Meta**' to manage the global meta information, which is not allowed to be instantiated</font>
-- <font color=#ff0000>wmath use class **Fraction** as one of its basic data types, since wmath mainly focus on rational operation</font> 
-- <font color=#ff0000>param '**_new**' is a bool data, included in many methods in wmath, that decides whether to return a brand-new data or apply change on {self}</font>
+- wmath use a class called '**Meta**' to manage the global meta information, which is not allowed to be instantiated
+- wmath has its own class **Fraction** as one of its basic data types
+- param '**_new**' is a bool data, included in many methods in wmath, that decides whether to return a brand-new data or apply change on {self}
 ## modules
 wmath contains the following modules: 
 - meta.py ------ manage the global meta information
@@ -24,8 +24,7 @@ then you can add constants under it, such as `a.NAME = 'a'`
 after that, you can't change the value of a.NAME. 
     __setattr__(self, key, value)
 ```
-### <font color=#ff0000>Meta</font>
-<font color=#ff0000>this part is very important !</font>
+### Meta
 ```markdown
 (class)
 define Meta information in math.
@@ -51,8 +50,6 @@ define Meta information in math.
                 |- int: (lambda) x: 0
                 |- float: (lambda) x: 0.0
                 |- complex: (lambda) x: 0 + 0j
-                |- ...
-            |- ANY:
                 |- ...
             |- ...
         |- DETERMINE:
@@ -235,8 +232,7 @@ a * x = 1 (mod n)
     :return: (int) x
 ```
 ## fraction.py
-### <font color=#ff0000>Fraction</font>
-<font color=#ff0000>the basic data type of wmath. </font>
+### Fraction
 ```markdown
 (class)
 define the class of fraction in math and operation among them.
@@ -264,6 +260,11 @@ define the class of fraction in math and operation among them.
     __mul__(self, other)
     __truediv__(self, other)
     __pow__(self, power: int, modulo=None)
+```
+- conjugate(self)
+```markdown
+(function)
+    :return +self
 ```
 - formula(self)
 ```markdown
@@ -351,6 +352,29 @@ calc the value of the corresponding polynomial function where x is designated.
     :param x: (self.basic_data_type()) independent variable
     :return: (self.basic_data_type()) value
 ```
+- conjugate(self, _new: bool = True)
+```markdown
+(function)
+conjugate
+    :param _new: (bool)
+    :return: (Polynomial)
+```
+- derived(self, _new: bool = False)
+```markdown
+(function)
+this function is valid only when self.basic_data_type support number multiplication.
+derived polynomial of self.
+    :param _new: (bool)
+    :return: (Polynomial)
+```
+- integral(self, _new: bool = False)
+```markdown
+(function)
+this function is valid only when self.basic_data_type support number multiplication.
+integral of polynomial function, with zero as its constant coefficient.
+    :param _new: (bool)
+    :return: (Polynomial)
+```
 - monic(self, _new: bool = False)
 ```markdown
 (function)
@@ -384,6 +408,15 @@ _new decides whether to return the new polynomial or applying change on {self}.
 *** this function is valid only when self.basic_data_type() is Fraction ! ***
 calc all rational roots in the corresponding polynomial function.
     :return: (list of Fraction) all rational roots
+```
+- real_roots(self, x_precision=1e-12, y_precision=None)
+```markdown
+(function)
+this function is valid only when self.basic_data_type is float.
+return all real roots.
+    :param x_precision: (float)
+    :param y_precision: (float)
+    :return: (list of real number) real roots, with bigger further ahead
 ```
 - formula(self)
 ```markdown
@@ -450,6 +483,18 @@ basic data type of this matrix.
 total number of rows and columns.
     :return: (tuple)
 ```
+- horizontal_split(self)
+```markdown
+(function)
+return a list of Matrix which is horizontally split from self. 
+    :return: (list of Matrix)
+```
+- vertical_spilt(self)
+```markdown
+(function)
+return a list of Matrix which is vertically split from self. 
+    :return: (list of Matrix)
+```
 - part(self, rows, cols):
 ```markdown
 (function)
@@ -492,6 +537,13 @@ _new decides whether to return a new matrix or applying change on {self}.
     :param _new: (bool)
     :return: (Matrix) if _new: a new matrix, else: self after transpose
 ```
+- conjugate(self, _new: bool = True)
+```markdown
+(function)
+conjugate
+    :param _new: (bool)
+    :return: (Matrix) if _new: a new matrix, else: self after conjugate
+```
 - stepped(self, standardized: bool = False, simplified: bool = False, _new: bool = False, _neg_needed: bool = False, _independent_cols_needed: bool = False)
 ```markdown
 (function)
@@ -504,16 +556,30 @@ turn any matrix into stepped or standardized stepped or simplified stepped matri
     :return: (Matrix) if _new: a new matrix, else: self after stepped or standardized stepped or simplified stepped.
             (multi) Matrix as above, [_neg: (bool) if _neg_needed], [_independent_cols: (list) if _independent_cols_needed]
 ```
+- trace(self)
+```markdown
+(function)
+trace of matrix.
+    :return: (self.basic_data_type())
+```
 - rank(self)
 ```markdown
 (function)
 rank of matrix.
     :return: (int) rank
 ```
-- determinant(self)
+- determinant_upper_triangle(self)
 ```markdown
 (function)
-calc determinant of a square matrix.
+calc determinant of a square matrix with upper triangle method.
+    :return: (Fraction) determinant
+```
+- determinant_definition(self)
+```markdown
+(function)
+calc determinant of a square matrix according to the definition of determinant.
+it runs much slower than determinant_upper_triangle(). but it's very useful when upper triangle is invalid, such
+as Matrix(Polynomial) since Polynomial's truediv return two arguments rather than one.
     :return: (Fraction) determinant
 ```
 - inverse(self, _new: bool = False)
@@ -529,6 +595,21 @@ _new decides whether to return a new matrix or applying change on {self}.
 (function)
 accompany matrix
     :return: (Matrix) if _new: a new matrix, else: self after turning to its accompany matrix
+```
+- qr_schmidt_decomposition(self, _column_linearly_independent: bool = False)
+```markdown
+(function)
+QR decomposition of matrix.
+    :return: (Matrix, Matrix) Q, R
+```
+- upper_hessenburg(self, _new: bool = False, _unitary_need: bool = False)
+```markdown
+(function)
+make the matrix upper hessenburg.
+unitary * self * (unitary^T.conjugate()) is a hessenburg matrix.
+    :param _new: (bool)
+    :param _unitary_need: (bool)
+    :return: (Matrix or Matrix, Matrix)
 ```
 ### matrix_zero(_row: int, _col: int, _filled)
 ```markdown

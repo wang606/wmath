@@ -130,6 +130,10 @@ class Matrix(Paradigm):
         return len(self.kernel), len(self.kernel[0])
 
     def horizontal_split(self):
+        """
+        return a list of Matrix which is horizontally split from self.
+        :return: (list of Matrix)
+        """
         _self = +self
         _list = []
         for _i in range(_self.size()[1]):
@@ -141,6 +145,10 @@ class Matrix(Paradigm):
         return _list
 
     def vertical_split(self):
+        """
+        return a list of Matrix which is vertically split from self.
+        :return: (list of Matrix)
+        """
         _self = +self
         _list = []
         for _i in range(_self.size()[0]):
@@ -151,7 +159,7 @@ class Matrix(Paradigm):
             _list[_i] = Matrix(_list[_i])
         return _list
 
-    def part(self, _rows, _cols):
+    def part(self, _rows=None, _cols=None):
         """
         return a new Matrix with values deep-copied from {self}, specified by {rows} and {cols}.
         _rows(_cols) accept range (_from, _to, _step) or list [a1, a2, ...] type.
@@ -171,7 +179,7 @@ class Matrix(Paradigm):
             _kernel.append(_list)
         return Matrix(_kernel)
 
-    def fill(self, other, _rows, _cols, _new=False):
+    def fill(self, other, _rows=None, _cols=None, _new=False):
         """
         fill specific part of {self} with corresponding values in {other}.
         the part is specified by {_rows} and {_cols}.
@@ -353,9 +361,9 @@ class Matrix(Paradigm):
         :return: (self.basic_data_type())
         """
         assert self.size()[0] == self.size()[1]
-        _trace = Meta.get_meta(self.kernel[-1][-1], 'ONE')
+        _trace = Meta.get_meta(self.kernel[-1][-1], 'ZERO')
         for _i in range(self.size()[0]):
-            _trace *= self.kernel[_i][_i]
+            _trace += self.kernel[_i][_i]
         return _trace
 
     def rank(self):
@@ -383,7 +391,7 @@ class Matrix(Paradigm):
             _determinant *= _self.kernel[_index][_index]
         return _determinant
 
-    def determinant(self):
+    def determinant_definition(self):
         """
         calc determinant of a square matrix according to the definition of determinant.
         it runs much slower than determinant_upper_triangle(). but it's very useful when upper triangle is invalid, such
@@ -473,7 +481,7 @@ class Matrix(Paradigm):
         assert self.size()[0] == self.size()[1]
         _inverse = self.inverse(_new=True)
         if _inverse is not None:
-            _determinant = self.determinant()
+            _determinant = self.determinant_upper_triangle()
             return _inverse.times(_determinant)
         if self.rank() < self.size()[0] - 1:
             return matrix_zero(self.size()[0], self.size()[1], Meta.get_meta(self.kernel[-1][-1], 'ZERO'))
@@ -483,10 +491,10 @@ class Matrix(Paradigm):
             for _j in range(self.size()[1]):
                 _i_list = [__i for __i in range(self.size()[0]) if __i != _i]
                 _j_list = [__j for __j in range(self.size()[0]) if __j != _j]
-                _kernel[_i].append(self.part(_i_list, _j_list).determinant())
+                _kernel[_i].append(self.part(_i_list, _j_list).determinant_upper_triangle())
         return Matrix(_kernel)
     
-    def qr_decomposition(self):
+    def qr_schmidt_decomposition(self, _column_linearly_independent: bool = False):
         """
         QR decomposition of matrix.
         :return: (Matrix, Matrix) Q, R
@@ -497,25 +505,27 @@ class Matrix(Paradigm):
                 __result += col1.kernel[__i][0] * col2.kernel[__i][0].conjugate()
             return __result
 
-        _, independent_cols = self.stepped(_new=True, _independent_cols_needed=True)
         _one = Meta.get_meta(self.kernel[-1][-1], 'ONE')
+        independent_cols = []
+        if not _column_linearly_independent:
+            _, independent_cols = self.stepped(_new=True, _independent_cols_needed=True)
+            _column_linearly_independent = len(independent_cols) == self.size()[1]
 
-        if len(independent_cols) == self.size()[1]:
+        if _column_linearly_independent:
 
             _self = self.horizontal_split()
             _unitary = [+_i for _i in _self]
-            _triangle = matrix_one(self.size()[1], self.size()[1], _one).horizontal_split()
+            _triangle = matrix_one(self.size()[1], self.size()[1], _one)
             _inner = []
 
             for _i in range(self.size()[1]):
                 for _j in range(_i):
                     _coefficient = __inner(_self[_i], _unitary[_j]) / _inner[_j]
-                    _triangle[_i].kernel[_j][0] = _coefficient
+                    _triangle.kernel[_j][_i] = _coefficient
                     _unitary[_i] -= _unitary[_j].times(_coefficient, _new=True)
                 _inner.append(__inner(_unitary[_i], _unitary[_i]))
 
             _unitary = matrix_horizontal_stack(_unitary)
-            _triangle = matrix_horizontal_stack(_triangle)
 
             for _i in range(self.size()[1]):
                 _coefficient = _inner[_i] ** 0.5
@@ -525,9 +535,9 @@ class Matrix(Paradigm):
             return _unitary, _triangle
 
         else:
-            independent_part = self.part(_rows=None, _cols=independent_cols)
-            independent_unitary, _ = independent_part.qr_decomposition()
-            dependent_unitary_list = homogeneous_linear_equations(independent_unitary.transpose(_new=True).conjugate())
+            independent_part = self.part(_cols=independent_cols)
+            independent_unitary, _ = independent_part.qr_schmidt_decomposition(_column_linearly_independent=True)
+            dependent_unitary_list = homogeneous_linear_equations(independent_part.transpose(_new=True).conjugate())
             for _i in dependent_unitary_list:
                 _i.times(_one / __inner(_i, _i) ** 0.5)
             dependent_unitary = matrix_horizontal_stack(dependent_unitary_list)
@@ -538,9 +548,41 @@ class Matrix(Paradigm):
                 if _i not in independent_cols:
                     dependent_cols.append(_i)
             _unitary.fill(dependent_unitary.kernel, _rows=None, _cols=dependent_cols)
-            _transpose = _unitary.transpose(_new=True).conjugate()
-            _triangle = _transpose * self
+            _triangle = _unitary.transpose(_new=True).conjugate() * self
             return _unitary, _triangle
+
+    def upper_hessenburg(self, _new: bool = False, _unitary_need: bool = False):
+        """
+        make the matrix upper hessenburg.
+        unitary * self * (unitary^T.conjugate()) is a hessenburg matrix.
+        :param _new: (bool)
+        :param _unitary_need: (bool)
+        :return: (Matrix or Matrix, Matrix)
+        """
+        assert self.size()[0] == self.size()[1]
+        if _new:
+            _self = +self
+        else:
+            _self = self
+        _one = Meta.get_meta(_self.kernel[-1][-1], 'ONE')
+        _unitary = matrix_one(_self.size()[0], _self.size()[1], _one)
+        for _i in range(1, _self.size()[0] - 2):
+            print(_i)
+            _size = _self.size()[0] - _i
+            _v = _self.part(_rows=range(_i, _self.size()[0]), _cols=[_i - 1])
+            _v_norm_2 = (_v.transpose(_new=True).conjugate() * _v).kernel[0][0] ** 0.5
+            _e = matrix_one(_size, 1, _one).times(_v_norm_2)
+            _u = _v - _e
+            _sub_p = matrix_one(_size, _size, _one) - (_u * _u.transpose(_new=True).conjugate()).times\
+                (_one * 2 / (_u.transpose(_new=True).conjugate() * _u).kernel[0][0])
+            _p = matrix_one(_self.size()[0], _self.size()[1], _one)
+            _p.fill(_sub_p.kernel, range(_i, _self.size()[0]), range(_i, _self.size()[1]))
+            _self = _p * _self * _p.transpose(_new=True).conjugate()
+            _unitary = _p * _unitary
+        if _unitary_need:
+            return _self, _unitary
+        else:
+            return _self
 
 
 def matrix_zero(_row: int, _col: int, _filled):
