@@ -1,7 +1,6 @@
 import wmath
 import random
 import time
-import copy
 
 
 def get_random_list2d(m, n):

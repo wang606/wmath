@@ -96,6 +96,9 @@ class Fraction:
     def __float__(self):
         return self.molecule / self.denominator
 
+    def __complex__(self):
+        return complex(self.molecule / self.denominator, 0)
+
     def __eq__(self, other):
         return self.molecule == other.molecule and self.denominator == other.denominator
 
@@ -211,10 +214,24 @@ def list2float(x: list):
     for _i in x:
         if type(_i).__name__ == 'list':
             _list.append(list2float(_i))
-        elif type(_i).__name__ == 'Fraction':
-            _list.append(float(_i))
         elif type(_i).__name__ == 'str':
             _list.append(float(Fraction(_i)))
         else:
             _list.append(float(_i))
+    return _list
+
+
+def list2complex(x: list):
+    """
+    covert list of float into complex in an any dimension list.
+    it's very useful when you want to convert float into complex in eigenvalue algorithm.
+    :param x: (list of float)
+    :return: (list of only complex)
+    """
+    _list = []
+    for _i in x:
+        if type(_i).__name__ == 'list':
+            _list.append(list2complex(_i))
+        else:
+            _list.append(complex(_i))
     return _list

@@ -719,11 +719,8 @@ class Matrix(Paradigm):
         else:
             return _triangle
 
-    def eigenvalue(self):
-        """
-        Q * self * Q.transpose().conjugate() is an upper triangle matrix which contains all self's eigenvalue.
-        :return: ([Matrix, ]Matrix) [Q, ]D
-        """
+    '''# [Abandoned]
+    def eigenvalue_without_shifts(self):
         assert self.size()[0] == self.size()[1]
         if not self.is_upper_hessenberg():
             _self = self.upper_hessenberg()
@@ -749,16 +746,91 @@ class Matrix(Paradigm):
                 _g = Matrix([[_c1, _s1], [_s2, _c2]])
                 _givens[_i] = _g
                 if _is_tridiagonal:
-                    _self.fill((_g * _self.part(_rows=[_i, _i + 1], _cols=range(_i, min(_i + 3, _len)))).kernel, _rows=[_i, _i + 1], _cols=range(_i, min(_i + 3, _len)))
+                    _self.fill((_g * _self.part(_rows=[_i, _i + 1], _cols=range(_i, min(_i + 3, _len)))).kernel,
+                               _rows=[_i, _i + 1], _cols=range(_i, min(_i + 3, _len)))
                 else:
-                    _self.fill((_g * _self.part(_rows=[_i, _i + 1], _cols=range(_i, _len))).kernel, _rows=[_i, _i + 1], _cols=range(_i, _len))
+                    _self.fill((_g * _self.part(_rows=[_i, _i + 1], _cols=range(_i, _len))).kernel,
+                               _rows=[_i, _i + 1], _cols=range(_i, _len))
             for _i in range(_len - 1):
                 if _is_tridiagonal:
-                    _self.fill((_self.part(_rows=range(max(0, _i - 1), _i + 2), _cols=[_i, _i + 1]) * _givens[_i].transpose().conjugate()).kernel, _rows=range(max(0, _i - 1), _i + 2), _cols=[_i, _i + 1])
+                    _self.fill((_self.part(_rows=range(max(0, _i - 1), _i + 2), _cols=[_i, _i + 1]) *
+                                _givens[_i].transpose().conjugate()).kernel,
+                               _rows=range(max(0, _i - 1), _i + 2), _cols=[_i, _i + 1])
                 else:
-                    _self.fill((_self.part(_rows=range(_i + 2), _cols=[_i, _i + 1]) * _givens[_i].transpose().conjugate()).kernel, _rows=range(_i + 2), _cols=[_i, _i + 1])
+                    _self.fill((_self.part(_rows=range(_i + 2), _cols=[_i, _i + 1]) *
+                                _givens[_i].transpose().conjugate()).kernel,
+                               _rows=range(_i + 2), _cols=[_i, _i + 1])
             if Meta.determine_meta(_self.kernel[-1][-2], 'ZERO'):
                 _eigenvalue.append(_self.kernel[-1][-1])
+                _self = _self.part(range(_len - 1), range(_len - 1))
+        for _i in range(_self.size()[0]):
+            _eigenvalue.append(_self.kernel[_i][_i])
+        return _eigenvalue
+    '''
+
+    def eigenvalue(self):
+        """
+        eigenvalue of self with double shifts method.
+        the basic data type of self must be complex unless all eigenvalue is real numbers.
+        :return: (list) eigenvalues
+        """
+        def qr_iteration_for_upper_hessenberg(_self: Matrix):
+            __len = _self.size()[0]
+            _givens = [matrix_one(2, 2, Meta.get_meta(_self.kernel[-1][-1], 'ONE'))] * (_len - 1)
+            for __i in range(__len - 1):
+                if Meta.determine_meta(_self.kernel[__i + 1][__i], 'ZERO'):
+                    continue
+                __a = _self.kernel[__i][__i]
+                __a_norm = __a * __a.conjugate()
+                __b = _self.kernel[__i + 1][__i]
+                __b_norm = __b * __b.conjugate()
+                _norm_2 = (__a_norm + __b_norm) ** 0.5
+                _c1 = __a.conjugate() / _norm_2
+                _s1 = __b.conjugate() / _norm_2
+                _s2 = -__b / _norm_2
+                _c2 = __a / _norm_2
+                _g = Matrix([[_c1, _s1], [_s2, _c2]])
+                _givens[__i] = _g
+                if _is_tridiagonal:
+                    _self.fill((_g * _self.part(_rows=[__i, __i + 1], _cols=range(__i, min(__i + 3, _len)))).kernel,
+                               _rows=[__i, __i + 1], _cols=range(__i, min(__i + 3, _len)))
+                else:
+                    _self.fill((_g * _self.part(_rows=[__i, __i + 1], _cols=range(__i, _len))).kernel,
+                               _rows=[__i, __i + 1], _cols=range(__i, _len))
+            for __i in range(_len - 1):
+                if _is_tridiagonal:
+                    _self.fill((_self.part(_rows=range(max(0, __i - 1), __i + 2), _cols=[__i, __i + 1]) *
+                                _givens[__i].transpose().conjugate()).kernel,
+                               _rows=range(max(0, __i - 1), __i + 2), _cols=[__i, __i + 1])
+                else:
+                    _self.fill((_self.part(_rows=range(__i + 2), _cols=[__i, __i + 1]) *
+                                _givens[__i].transpose().conjugate()).kernel,
+                               _rows=range(__i + 2), _cols=[__i, __i + 1])
+
+        assert self.size()[0] == self.size()[1]
+        if not self.is_upper_hessenberg():
+            _self = self.upper_hessenberg()
+        else:
+            _self = +self
+        _eigenvalue = []
+        _is_tridiagonal = _self.is_tridiagonal()
+        while not _self.is_upper_triangle():
+            _len = _self.size()[0]
+            _b = _self.kernel[-2][-2] + _self.kernel[-1][-1]
+            _c = _self.kernel[-1][-2] * _self.kernel[-2][-1] - _self.kernel[-2][-2] * _self.kernel[-1][-1]
+            _delta = (_b ** 2 + _c * 4) ** 0.5
+            _a1 = (_b + _delta) * 0.5
+            _a2 = (_b - _delta) * 0.5
+            _shift1 = matrix_one(_len, _len, _a1)
+            _shift2 = matrix_one(_len, _len, _a2)
+            _self -= _shift1
+            qr_iteration_for_upper_hessenberg(_self)
+            _self += _shift1 - _shift2
+            qr_iteration_for_upper_hessenberg(_self)
+            _self += _shift2
+            if Meta.determine_meta(_self.kernel[-1][-2], 'ZERO'):
+                _eigenvalue.append(_self.kernel[-1][-1])
+                _len = _self.size()[0]
                 _self = _self.part(range(_len - 1), range(_len - 1))
         for _i in range(_self.size()[0]):
             _eigenvalue.append(_self.kernel[_i][_i])
