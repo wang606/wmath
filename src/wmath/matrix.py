@@ -1,6 +1,6 @@
 """
 matrix.py
-this script is response for the problems related to matrix in the rational number field.
+this script is response for the problems related to matrix.
 """
 from wmath.meta import Meta
 from wmath.paradigm import Paradigm
@@ -12,8 +12,12 @@ class Matrix(Paradigm):
     """
     define the class of matrix and related operations among them.
     """
-    def __init__(self, kernel: list):
+    def __init__(self, kernel: list, _deepcopy: bool = False):
         super().__init__()
+        if _deepcopy:
+            kernel = deepcopy(kernel)
+        else:
+            kernel = kernel
         assert kernel
         _type = type(kernel[-1][-1]).__name__
         _kernel = []
@@ -67,7 +71,7 @@ class Matrix(Paradigm):
             for _j in range(self.size()[1]):
                 _kernel[_i].append(self.kernel[_i][_j] + other.kernel[_i][_j])
         return Matrix(_kernel)
-    
+
     def __sub__(self, other):
         assert self.basic_data_type().__name__ == other.basic_data_type().__name__
         assert self.size() == other.size()
@@ -77,7 +81,7 @@ class Matrix(Paradigm):
             for _j in range(self.size()[1]):
                 _kernel[_i].append(self.kernel[_i][_j] - other.kernel[_i][_j])
         return Matrix(_kernel)
-    
+
     def __mul__(self, other):
         assert self.basic_data_type().__name__ == other.basic_data_type().__name__
         assert self.size()[1] == other.size()[0]
@@ -159,12 +163,13 @@ class Matrix(Paradigm):
             _list[_i] = Matrix(_list[_i])
         return _list
 
-    def part(self, _rows=None, _cols=None):
+    def part(self, _rows=None, _cols=None, _deepcopy: bool = True):
         """
-        return a new Matrix with values deep-copied from {self}, specified by {rows} and {cols}.
+        return a new Matrix with values copied or deep-copied from {self}, specified by {rows} and {cols}.
         _rows(_cols) accept range (_from, _to, _step) or list [a1, a2, ...] type.
         :param _rows: (range or list of int or None if you choose all rows)
         :param _cols: (range or list of int or None if you choose all cols)
+        :param _deepcopy: (bool)
         :return: (Matrix)
         """
         if _rows is None:
@@ -175,7 +180,10 @@ class Matrix(Paradigm):
         for _i in _rows:
             _list = []
             for _j in _cols:
-                _list.append(deepcopy(self.kernel[_i][_j]))
+                if _deepcopy:
+                    _list.append(deepcopy(self.kernel[_i][_j]))
+                else:
+                    _list.append(self.kernel[_i][_j])
             _kernel.append(_list)
         return Matrix(_kernel)
 
@@ -234,18 +242,22 @@ class Matrix(Paradigm):
                 _self.kernel[_i][_j] *= _times
         return _self
 
-    def transpose(self, _new: bool = True):
+    def transpose(self, _new: bool = True, _deepcopy: bool = True):
         """
         transpose
         _new decides whether to return a new matrix or applying change on {self}.
         :param _new: (bool)
+        :param _deepcopy: (bool)
         :return: (Matrix) if _new: a new matrix, else: self after transpose
         """
         _kernel = []
         for _i in range(self.size()[1]):
             _kernel.append([])
             for _j in range(self.size()[0]):
-                _kernel[_i].append(deepcopy(self.kernel[_j][_i]))
+                if _deepcopy:
+                    _kernel[_i].append(deepcopy(self.kernel[_j][_i]))
+                else:
+                    _kernel[_i].append(self.kernel[_j][_i])
         if _new:
             return Matrix(_kernel)
         else:
@@ -493,10 +505,59 @@ class Matrix(Paradigm):
                 _j_list = [__j for __j in range(self.size()[0]) if __j != _j]
                 _kernel[_i].append(self.part(_i_list, _j_list).determinant_upper_triangle())
         return Matrix(_kernel)
-    
+
+    def is_diagonal(self):
+        if self.size()[0] != self.size()[1]:
+            return False
+        for _i in range(self.size()[0]):
+            for _j in range(self.size()[1]):
+                if _i != _j and not Meta.determine_meta(self.kernel[_i][_j], 'ZERO'):
+                    return False
+        return True
+
+    def is_upper_triangle(self):
+        if self.size()[0] != self.size()[1]:
+            return False
+        for _i in range(self.size()[0]):
+            for _j in range(_i):
+                if not Meta.determine_meta(self.kernel[_i][_j], 'ZERO'):
+                    return False
+        return True
+
+    def is_hermite(self):
+        if self.size()[0] != self.size()[1]:
+            return False
+        for _i in range(self.size()[0]):
+            for _j in range(_i + 1, self.size()[1]):
+                if not Meta.determine_meta(self.kernel[_i][_j] - self.kernel[_j][_i].conjugate(), 'ZERO'):
+                    return False
+        return True
+
+    def is_upper_hessenberg(self):
+        if self.size()[0] != self.size()[1]:
+            return False
+        for _i in range(self.size()[0]):
+            for _j in range(self.size()[1]):
+                if _j < _i - 1:
+                    if not Meta.determine_meta(self.kernel[_i][_j], 'ZERO'):
+                        return False
+        return True
+
+    def is_tridiagonal(self):
+        if self.size()[0] != self.size()[1]:
+            return False
+        for _i in range(self.size()[0]):
+            for _j in range(self.size()[1]):
+                if _j < _i - 1 or _j > _i + 1:
+                    if not Meta.determine_meta(self.kernel[_i][_j], 'ZERO'):
+                        return False
+        return True
+
     def qr_schmidt_decomposition(self, _column_linearly_independent: bool = False):
         """
-        QR decomposition of matrix.
+        QR decomposition of matrix using schmidt method.
+        :param _column_linearly_independent: (bool) mark this param True if you are sure
+                                                    that the matrix is column linearly independent
         :return: (Matrix, Matrix) Q, R
         """
         def __inner(col1: Matrix, col2: Matrix):
@@ -552,41 +613,156 @@ class Matrix(Paradigm):
             return _unitary, _triangle
 
     def qr_householder_decomposition(self, _unitary_need: bool = False):
-        pass
+        """
+        qr decomposition of matrix using householder method.
+        matrix must be square.
+        :param _unitary_need: (bool)
+        :return: ([Matrix, ]Matrix) [Q, ]R
+        """
+        assert self.size()[0] == self.size()[1]
+        _triangle = +self
+        _len = _triangle.size()[0]
+        _one = Meta.get_meta(_triangle.kernel[-1][-1], 'ONE')
+        _unitary = matrix_one(_len, _len, _one)
+        for _i in range(_len - 1):
+            if Meta.determine_meta(_triangle.part(_rows=range(_i + 1, _len), _cols=[_i]), 'ZERO'):
+                continue
+            _v = _triangle.part(_rows=range(_i, _len), _cols=[_i])
+            _v_norm_2 = (_v.transpose() * _v.conjugate()).kernel[0][0] ** 0.5
+            _e = matrix_one(_len - _i, 1, -(_v.kernel[0][0] / abs(_v.kernel[0][0])) * _v_norm_2)
+            _u = _v - _e
+            _times = _one * 2 / (_u.transpose() * _u.conjugate()).kernel[0][0]
+            _sub_p = matrix_one(_len - _i, _len - _i, _one) - (_u * _u.transpose().conjugate()).times(_times)
+            _triangle.fill(_e.kernel, _rows=range(_i, _len), _cols=[_i])
+            _triangle.fill((_sub_p * _triangle.part(_rows=range(_i, _len), _cols=range(_i + 1, _len))).kernel,
+                           _rows=range(_i, _len), _cols=range(_i + 1, _len))
+            if _unitary_need:
+                _unitary.fill((_sub_p * _unitary.part(_rows=range(_i, _len))).kernel, _rows=range(_i, _len))
+        if _unitary_need:
+            _unitary.transpose(_new=False).conjugate(_new=False)
+            return -_unitary, -_triangle
+        else:
+            return -_triangle
 
-    def upper_hessenberg(self, _unitary_need: bool = False):
+    def qr_givens_decomposition(self, _unitary_need: bool = True):
+        """
+        qr decomposition of matrix using givens method.
+        matrix must be square.
+        :param _unitary_need: (bool)
+        :return: ([Matrix, ]Matrix) [Q, ]R
+        """
+        assert self.size()[0] == self.size()[1]
+        _triangle = +self
+        _len = _triangle.size()[0]
+        _one = Meta.get_meta(_triangle.kernel[-1][-1], 'ONE')
+        _unitary = matrix_one(_len, _len, _one)
+        for _i in range(_len - 1):
+            for _j in range(_i + 1, _len):
+                if Meta.determine_meta(_triangle.kernel[_j][_i], 'ZERO'):
+                    continue
+                _a = _triangle.kernel[_i][_i]
+                _a_norm = _a * _a.conjugate()
+                _b = _triangle.kernel[_j][_i]
+                _b_norm = _b * _b.conjugate()
+                _norm_2 = (_a_norm + _b_norm) ** 0.5
+                _c1 = _a.conjugate() / _norm_2
+                _s1 = _b.conjugate() / _norm_2
+                _s2 = -_b / _norm_2
+                _c2 = _a / _norm_2
+                _g = Matrix([[_c1, _s1], [_s2, _c2]])
+                _triangle.fill((_g * _triangle.part(_rows=[_i, _j], _cols=range(_i, _len))).kernel,
+                               _rows=[_i, _j], _cols=range(_i, _len))
+                if _unitary_need:
+                    _unitary.fill((_g * _unitary.part(_rows=[_i, _j])).kernel, _rows=[_i, _j])
+        if _unitary_need:
+            _unitary.transpose(_new=False).conjugate(_new=False)
+            return _unitary, _triangle
+        else:
+            return _triangle
+
+    def upper_hessenberg(self, _unitary_need: bool = False, _is_hermite: bool = False):
         """
         make the matrix upper hessenberg.
         unitary * self * (unitary^T.conjugate()) is a hessenberg matrix.
         :param _unitary_need: (bool)
+        :param _is_hermite: (bool) mark this param True if you are sure that the matrix is a hermitian
         :return: (Matrix or Matrix, Matrix)
         """
         assert self.size()[0] == self.size()[1]
-        _self = +self
-        _one = Meta.get_meta(_self.kernel[-1][-1], 'ONE')
-        _unitary = matrix_one(_self.size()[0], _self.size()[1], _one)
-        for _i in range(1, _self.size()[0] - 1):
-            _size = _self.size()[0] - _i
-            _v = _self.part(_rows=range(_i, _self.size()[0]), _cols=[_i - 1])
+        if not _is_hermite:
+            _is_hermite = self.is_hermite()
+        _triangle = +self
+        _len = _triangle.size()[0]
+        _one = Meta.get_meta(_triangle.kernel[-1][-1], 'ONE')
+        _unitary = matrix_one(_len, _len, _one)
+        for _i in range(1, _len - 1):
+            if Meta.determine_meta(_triangle.part(_rows=range(_i + 1, _len), _cols=[_i - 1]), 'ZERO'):
+                continue
+            _v = _triangle.part(_rows=range(_i, _len), _cols=[_i - 1])
             _v_norm_2 = (_v.transpose() * _v.conjugate()).kernel[0][0] ** 0.5
-            _e = matrix_one(_size, 1, -(_v.kernel[0][0] / abs(_v.kernel[0][0])) * _v_norm_2)
+            _e = matrix_one(_len - _i, 1, -(_v.kernel[0][0] / abs(_v.kernel[0][0])) * _v_norm_2)
             _u = _v - _e
             _times = _one * 2 / (_u.transpose() * _u.conjugate()).kernel[0][0]
-            _sub_p = matrix_one(_size, _size, _one) - (_u * _u.transpose().conjugate()).times(_times)
-            _self.fill(_e.kernel, _rows=range(_i, _self.size()[0]), _cols=[_i - 1])
-            _self.fill((_self.part(_rows=range(_i), _cols=range(_i, _self.size()[1])) * _sub_p).kernel,
-                       _rows=range(_i), _cols=range(_i, _self.size()[1]))
-            _self.fill((_sub_p * _self.part(_rows=range(_i, _self.size()[0]), _cols=range(_i, _self.size()[1])) *
-                        _sub_p).kernel, _rows=range(_i, _self.size()[0]), _cols=range(_i, _self.size()[1]))
-            _unitary.fill((_sub_p * _unitary.part(_rows=range(_i, _self.size()[0]))).kernel,
-                          _rows=range(_i, _self.size()[0]))
+            _sub_p = matrix_one(_len - _i, _len - _i, _one) - (_u * _u.transpose().conjugate()).times(_times)
+            _triangle.fill(_e.kernel, _rows=range(_i, _len), _cols=[_i - 1])
+            if _is_hermite:
+                _triangle.fill(_e.transpose().conjugate().kernel, _rows=[_i - 1], _cols=range(_i, _len))
+            else:
+                _triangle.fill((_triangle.part(_rows=range(_i), _cols=range(_i, _len)) * _sub_p).kernel,
+                               _rows=range(_i), _cols=range(_i, _len))
+            _triangle.fill((_sub_p * _triangle.part(_rows=range(_i, _len), _cols=range(_i, _len)) *
+                            _sub_p).kernel, _rows=range(_i, _len), _cols=range(_i, _len))
+            if _unitary_need:
+                _unitary.fill((_sub_p * _unitary.part(_rows=range(_i, _len))).kernel, _rows=range(_i, _len))
         if _unitary_need:
-            return _self, _unitary
+            return _triangle, _unitary
         else:
-            return _self
+            return _triangle
 
-    def givens_on_upper_hessenberg(self):
-        pass
+    def eigenvalue(self):
+        """
+        Q * self * Q.transpose().conjugate() is an upper triangle matrix which contains all self's eigenvalue.
+        :return: ([Matrix, ]Matrix) [Q, ]D
+        """
+        assert self.size()[0] == self.size()[1]
+        if not self.is_upper_hessenberg():
+            _self = self.upper_hessenberg()
+        else:
+            _self = +self
+        _eigenvalue = []
+        _is_tridiagonal = _self.is_tridiagonal()
+        while not _self.is_upper_triangle():
+            _len = _self.size()[0]
+            _givens = [matrix_one(2, 2, Meta.get_meta(_self.kernel[-1][-1], 'ONE'))] * (_len - 1)
+            for _i in range(_len - 1):
+                if Meta.determine_meta(_self.kernel[_i + 1][_i], 'ZERO'):
+                    continue
+                _a = _self.kernel[_i][_i]
+                _a_norm = _a * _a.conjugate()
+                _b = _self.kernel[_i + 1][_i]
+                _b_norm = _b * _b.conjugate()
+                _norm_2 = (_a_norm + _b_norm) ** 0.5
+                _c1 = _a.conjugate() / _norm_2
+                _s1 = _b.conjugate() / _norm_2
+                _s2 = -_b / _norm_2
+                _c2 = _a / _norm_2
+                _g = Matrix([[_c1, _s1], [_s2, _c2]])
+                _givens[_i] = _g
+                if _is_tridiagonal:
+                    _self.fill((_g * _self.part(_rows=[_i, _i + 1], _cols=range(_i, min(_i + 3, _len)))).kernel, _rows=[_i, _i + 1], _cols=range(_i, min(_i + 3, _len)))
+                else:
+                    _self.fill((_g * _self.part(_rows=[_i, _i + 1], _cols=range(_i, _len))).kernel, _rows=[_i, _i + 1], _cols=range(_i, _len))
+            for _i in range(_len - 1):
+                if _is_tridiagonal:
+                    _self.fill((_self.part(_rows=range(max(0, _i - 1), _i + 2), _cols=[_i, _i + 1]) * _givens[_i].transpose().conjugate()).kernel, _rows=range(max(0, _i - 1), _i + 2), _cols=[_i, _i + 1])
+                else:
+                    _self.fill((_self.part(_rows=range(_i + 2), _cols=[_i, _i + 1]) * _givens[_i].transpose().conjugate()).kernel, _rows=range(_i + 2), _cols=[_i, _i + 1])
+            if Meta.determine_meta(_self.kernel[-1][-2], 'ZERO'):
+                _eigenvalue.append(_self.kernel[-1][-1])
+                _self = _self.part(range(_len - 1), range(_len - 1))
+        for _i in range(_self.size()[0]):
+            _eigenvalue.append(_self.kernel[_i][_i])
+        return _eigenvalue
 
 
 def matrix_zero(_row: int, _col: int, _filled):
@@ -618,17 +794,21 @@ def matrix_one(_row: int, _col: int, _value, _other_value=None):
     return Matrix(_kernel)
 
 
-def matrix_horizontal_stack(matrices: list):
+def matrix_horizontal_stack(matrices: list, _deepcopy: bool = True):
     """
     stack matrices horizontally.
     :param matrices: (list of Matrix)
+    :param _deepcopy: (bool)
     :return: (Matrix)
     """
     assert matrices
     for _i in range(1, len(matrices)):
         assert matrices[_i].basic_data_type() == matrices[0].basic_data_type()
         assert matrices[_i].size()[0] == matrices[0].size()[0]
-    _matrices = deepcopy(matrices)
+    if _deepcopy:
+        _matrices = deepcopy(matrices)
+    else:
+        _matrices = matrices
     _kernel = []
     for _i in range(_matrices[0].size()[0]):
         _kernel.append([])
@@ -638,17 +818,21 @@ def matrix_horizontal_stack(matrices: list):
     return Matrix(_kernel)
 
 
-def matrix_vertical_stack(matrices: list):
+def matrix_vertical_stack(matrices: list, _deepcopy: bool = True):
     """
     stacking two matrices vertically.
     :param matrices: (list of Matrix)
+    :param _deepcopy: (bool)
     :return: (Matrix)
     """
     assert matrices
     for _i in range(1, len(matrices)):
         assert matrices[_i].basic_data_type() == matrices[0].basic_data_type()
         assert matrices[_i].size()[1] == matrices[0].size()[1]
-    _matrices = deepcopy(matrices)
+    if _deepcopy:
+        _matrices = deepcopy(matrices)
+    else:
+        _matrices = matrices
     _kernel = []
     _row = 0
     for _i in range(len(_matrices)):

@@ -5,6 +5,7 @@ from wmath.fraction import *
 from wmath.paradigm import *
 from wmath.polynomial import *
 from wmath.matrix import *
+from wmath.cross import *
 
 
 # Meta.GET.ONE
@@ -41,7 +42,7 @@ def _determine_zero_polynomial(x):
                 return False
         return True
     else:
-        return Meta.determine_meta(x, 'ZERO')
+        return False  # Meta.determine_meta(x, 'ZERO')
 
 
 def _determine_one_polynomial(x):
@@ -53,7 +54,7 @@ def _determine_one_polynomial(x):
             return False
         return True
     else:
-        return Meta.determine_meta(x, 'ONE')
+        return False  # Meta.determine_meta(x, 'ONE')
 
 
 Meta.DETERMINE.ZERO.Polynomial = _determine_zero_polynomial
@@ -68,7 +69,7 @@ def _determine_zero_matrix(x):
                     return False
         return True
     else:
-        return Meta.determine_meta(x, 'ZERO')
+        return False  # Meta.determine_meta(x, 'ZERO')
 
 
 def _determine_one_matrix(x):
@@ -83,7 +84,7 @@ def _determine_one_matrix(x):
                         return False
         return True
     else:
-        return Meta.determine_meta(x, 'ONE')
+        return False  # Meta.determine_meta(x, 'ONE')
 
 
 Meta.DETERMINE.ZERO.Matrix = _determine_zero_matrix

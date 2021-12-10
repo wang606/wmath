@@ -215,7 +215,7 @@ class Polynomial(Paradigm):
             for _i in range(_self.degree()):
                 _self.coefficient[_i] /= _self.coefficient[-1]
             _self.coefficient[-1] = Meta.get_meta(self.coefficient[-1], 'ONE')
-            return self
+            return _self
 
     def primitive(self, _new: bool = False):
         """

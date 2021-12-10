@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="wmath",
-    version="0.0.13",
+    version="0.0.14",
     author="wang606",
     author_email="wang__qing__hua@163.com",
     description="Another simple mathematical package in the world",
