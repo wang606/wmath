@@ -31,7 +31,7 @@ def get_random_complex_list2d(m, n):
 
 start_time = time.time()
 # a = wmath.Matrix(get_random_complex_list2d(5, 5))
-a = wmath.Matrix(get_random_float_list2d(5, 5))
+a = wmath.Matrix(get_random_float_list2d(500, 500))
 # a += a.transpose().conjugate()
 b = a.part(_rows=None, _cols=[0]).times(wmath.Meta.get_meta(a.kernel[-1][-1], 'ONE') * 4.9) + \
     a.part(_rows=None, _cols=[4]).times(wmath.Meta.get_meta(a.kernel[-1][-1], 'ONE') * -9.8)

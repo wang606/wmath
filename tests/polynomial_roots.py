@@ -38,8 +38,10 @@ def get_random_complex_list2d(m, n):
 
 
 start_time = time.time()
-n = 15
-a = wmath.Polynomial(wmath.list2complex(get_random_float_list(n)))
+n = 150
+c = get_random_float_list(n)
+print(c[::-1])
+a = wmath.Polynomial(wmath.list2complex(c))
 b = wmath.polynomial_roots(a)
 for _i in b:
     print(_i, a.value(_i))

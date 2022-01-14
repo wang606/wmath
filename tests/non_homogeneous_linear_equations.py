@@ -25,9 +25,10 @@ def get_random_float_list2d(m, n):
 
 
 start_time = time.time()
+n = 100
 # a * X = b, with result stored in c.
-a = wmath.Matrix(get_random_float_list2d(8, 8))
-b = wmath.Matrix(get_random_float_list2d(8, 4))
+a = wmath.Matrix(get_random_float_list2d(n, n))
+b = wmath.Matrix(get_random_float_list2d(n, n))
 c = wmath.non_homogeneous_linear_equations(a, b)
 # out put the result
 # fundamental solutions

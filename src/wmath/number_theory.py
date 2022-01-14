@@ -4,11 +4,12 @@ this script is response for handling number theory problems in math.
 """
 import math
 import warnings
+from copy import deepcopy
 
 
 def is_prime(x: int):
     """
-    judge weather x is a prime.
+    judge whether x is a prime.
     if x <= 1, then return False.
     :param x: (int)
     :return: (bool) True if x is a prime, while False if not
@@ -159,23 +160,22 @@ def greatest_common_divisor_in_list(a: list):
     :return: (int) the greatest common divisor
     """
     assert a
-    if 1 in a:
+    _a = deepcopy(a)
+    if 1 in _a:
         return 1
-    while 0 in a:
-        a.remove(0)
-    if len(a) == 0:
+    while 0 in _a:
+        _a.remove(0)
+    if len(_a) == 0:
         warnings.warn('the greatest common divisor of 0 and 0 is unclear, return 0 instead. ', UserWarning)
         return 0
-    if len(a) == 1:
-        return a[0]
-    if len(a) == 2:
-        return greatest_common_divisor(a[0], a[1])
-    _list = []
-    for _i in range(len(a) // 2):
-        _list.append(greatest_common_divisor(a[2 * _i], a[2 * _i + 1]))
-    if len(a) % 2:
-        _list.append(a[-1])
-    return greatest_common_divisor_in_list(_list)
+    if len(_a) == 1:
+        return _a[0]
+    if len(_a) == 2:
+        return greatest_common_divisor(_a[0], _a[1])
+    while len(_a) != 1:
+        _a[-2] = greatest_common_divisor(_a[-2], _a[-1])
+        _a.pop()
+    return _a[0]
 
 
 def least_common_multiple(a: int, b: int):
@@ -195,20 +195,19 @@ def least_common_multiple_in_list(a: list):
     :return: (int) the least common multiple
     """
     assert a
-    while 1 in a:
-        a.remove(1)
-    if len(a) == 0:
+    _a = deepcopy(a)
+    while 1 in _a:
+        _a.remove(1)
+    if len(_a) == 0:
         return 1
-    if len(a) == 1:
-        return a[0]
-    if len(a) == 2:
-        return least_common_multiple(a[0], a[1])
-    _list = []
-    for _i in range(len(a) // 2):
-        _list.append(least_common_multiple(a[2 * _i], a[2 * _i + 1]))
-    if len(a) % 2:
-        _list.append(a[-1])
-    return least_common_multiple_in_list(_list)
+    if len(_a) == 1:
+        return _a[0]
+    if len(_a) == 2:
+        return least_common_multiple(_a[0], _a[1])
+    while len(_a) != 1:
+        _a[-2] = least_common_multiple(_a[-2], _a[-1])
+        _a.pop()
+    return _a[0]
 
 
 def greatest_common_divisor_with_coefficient(a: int, b: int):

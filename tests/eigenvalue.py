@@ -29,8 +29,8 @@ def get_random_complex_list2d(m, n):
 
 
 start_time = time.time()
-a = wmath.Matrix(get_random_complex_list2d(50, 50))
-# a = wmath.Matrix(wmath.list2complex(get_random_float_list2d(50, 50)))
+# a = wmath.Matrix(get_random_complex_list2d(50, 50))
+a = wmath.Matrix(wmath.list2complex(get_random_float_list2d(50, 50)))
 # a = wmath.Matrix(get_random_float_list2d(10, 10))
 # a += a.transpose().conjugate()
 b = a.eigenvalue()
